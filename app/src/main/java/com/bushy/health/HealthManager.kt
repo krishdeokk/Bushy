@@ -13,12 +13,15 @@ import java.time.temporal.ChronoUnit
 class HealthManager(private val context: Context) {
 
     private val healthConnectClient by lazy {
-        if (HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE) {
+        val status = HealthConnectClient.getSdkStatus(context)
+        if (status == HealthConnectClient.SDK_AVAILABLE) {
             HealthConnectClient.getOrCreate(context)
         } else {
             null
         }
     }
+
+    fun getSdkStatus(): Int = HealthConnectClient.getSdkStatus(context)
 
     val permissions = setOf(
         HealthPermission.getReadPermission(StepsRecord::class),

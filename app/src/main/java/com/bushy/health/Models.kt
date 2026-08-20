@@ -9,7 +9,8 @@ data class UserStats(
     val xp: Int = 0,
     val steps: Long = 0,
     val pushups: Int = 0,
-    val avatarType: AvatarType = AvatarType.MALE
+    val avatarType: AvatarType = AvatarType.MALE,
+    val syncMessage: String? = null
 ) {
     val nextLevelXp: Int get() = level * 100
 }

@@ -22,8 +22,19 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     fun refreshStats() {
         viewModelScope.launch {
+            val status = healthManager.getSdkStatus()
+            if (status != androidx.health.connect.client.HealthConnectClient.SDK_AVAILABLE) {
+                _uiState.update { it.copy(syncMessage = "Health Connect not available (Status: $status)") }
+                return@launch
+            }
+
+            if (!healthManager.hasPermissions()) {
+                _uiState.update { it.copy(syncMessage = "Waiting for permissions...") }
+                return@launch
+            }
+
             val steps = healthManager.readDailySteps()
-            _uiState.update { it.copy(steps = steps) }
+            _uiState.update { it.copy(steps = steps, syncMessage = if (steps > 0) null else "No steps found for today. Make sure Google Fit is syncing to Health Connect.") }
             calculateXp()
         }
     }
