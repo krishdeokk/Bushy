@@ -1159,18 +1159,43 @@ fun ActionSection(onRefresh: () -> Unit) {
 
 @Composable
 fun AvatarSelectionDialog(onDismiss: () -> Unit, onSelect: (AvatarType) -> Unit) {
+    val context = LocalContext.current
+    val imageLoader = remember {
+        ImageLoader.Builder(context)
+            .components {
+                if (Build.VERSION.SDK_INT >= 28) {
+                    add(ImageDecoderDecoder.Factory())
+                } else {
+                    add(GifDecoder.Factory())
+                }
+            }
+            .build()
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Choose Your Hero") },
+        title = { Text("Choose Your Hero", fontWeight = FontWeight.ExtraBold) },
         text = {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 16.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                AvatarOption(AvatarType.MALE, Icons.Default.Face, onSelect)
-                AvatarOption(AvatarType.FEMALE, Icons.Default.Face6, onSelect)
+                AvatarOption(
+                    type = AvatarType.MALE, 
+                    imageRes = com.bushy.health.R.drawable.male_neutral,
+                    imageLoader = imageLoader,
+                    onSelect = onSelect,
+                    modifier = Modifier.weight(1f)
+                )
+                AvatarOption(
+                    type = AvatarType.FEMALE, 
+                    imageRes = com.bushy.health.R.drawable.female_neutral,
+                    imageLoader = imageLoader,
+                    onSelect = onSelect,
+                    modifier = Modifier.weight(1f)
+                )
             }
         },
         confirmButton = {
@@ -1180,10 +1205,16 @@ fun AvatarSelectionDialog(onDismiss: () -> Unit, onSelect: (AvatarType) -> Unit)
 }
 
 @Composable
-fun AvatarOption(type: AvatarType, icon: ImageVector, onSelect: (AvatarType) -> Unit) {
+fun AvatarOption(
+    type: AvatarType, 
+    imageRes: Int,
+    imageLoader: ImageLoader,
+    onSelect: (AvatarType) -> Unit,
+    modifier: Modifier = Modifier
+) {
     OutlinedCard(
         onClick = { onSelect(type) },
-        modifier = Modifier.size(110.dp),
+        modifier = modifier.aspectRatio(0.8f),
         shape = RoundedCornerShape(32.dp)
     ) {
         Column(
@@ -1191,13 +1222,16 @@ fun AvatarOption(type: AvatarType, icon: ImageVector, onSelect: (AvatarType) -> 
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Icon(
-                icon, 
-                contentDescription = null, 
-                modifier = Modifier.size(48.dp),
-                tint = MaterialTheme.colorScheme.primary
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(imageRes)
+                    .build(),
+                imageLoader = imageLoader,
+                contentDescription = null,
+                modifier = Modifier.size(80.dp),
+                contentScale = ContentScale.Fit
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             Text(
                 type.name, 
                 style = MaterialTheme.typography.labelLarge,
