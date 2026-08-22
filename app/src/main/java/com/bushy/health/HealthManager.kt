@@ -37,12 +37,14 @@ class HealthManager(private val context: Context) {
     suspend fun readDailySteps(): Long {
         val client = healthConnectClient ?: return 0
         try {
-            val startTime = ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS).toInstant()
-            val endTime = Instant.now()
+            // More robust "Start of Day" calculation
+            val now = Instant.now()
+            val startTime = ZonedDateTime.now().toLocalDate().atStartOfDay(ZonedDateTime.now().zone).toInstant()
+            
             val response = client.aggregate(
                 AggregateRequest(
                     metrics = setOf(StepsRecord.COUNT_TOTAL),
-                    timeRangeFilter = TimeRangeFilter.between(startTime, endTime)
+                    timeRangeFilter = TimeRangeFilter.between(startTime, now)
                 )
             )
             return response[StepsRecord.COUNT_TOTAL] ?: 0

@@ -4,22 +4,58 @@ enum class AvatarType {
     MALE, FEMALE
 }
 
+enum class AvatarExpression {
+    NEUTRAL, HAPPY, EXCITED, WORKING_OUT, CELEBRATING, TIRED, ATTENTIVE, SURPRISED, LAUGHING, ANGRY
+}
+
+enum class ThemeMode {
+    LIGHT, DARK, SYSTEM
+}
+
+enum class VisualStyle {
+    MATERIAL3, MONOCHROME
+}
+
 data class UserStats(
-    val level: Int = 1,
-    val xp: Int = 0,
+    val userName: String = "",
+    val age: Int = 0,
+    val height: Int = 0,
+    val isSetupComplete: Boolean = false,
+    val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    val visualStyle: VisualStyle = VisualStyle.MATERIAL3,
     val steps: Long = 0,
     val pushups: Int = 0,
+    val xp: Long = 0,
     val avatarType: AvatarType = AvatarType.MALE,
-    val syncMessage: String? = null
+    val expression: AvatarExpression = AvatarExpression.NEUTRAL,
+    val syncMessage: String? = null,
+    val tasks: List<HealthTask> = emptyList()
 ) {
-    val nextLevelXp: Int get() = level * 100
+    val calories: Int get() = (steps * 0.04).toInt()
+    
+    val level: Int get() = (Math.sqrt(xp.toDouble() / 100.0).toInt() + 1)
+    
+    val xpInCurrentLevel: Long get() {
+        val currentLevelStartXP = 100L * (level - 1) * (level - 1)
+        return xp - currentLevelStartXP
+    }
+    
+    val xpRequiredForNextLevel: Long get() {
+        val currentLevelStartXP = 100L * (level - 1) * (level - 1)
+        val nextLevelStartXP = 100L * level * level
+        return nextLevelStartXP - currentLevelStartXP
+    }
+    
+    val levelProgress: Float get() = xpInCurrentLevel.toFloat() / xpRequiredForNextLevel.toFloat()
 }
 
 data class HealthTask(
+    val id: String,
     val title: String,
     val target: Int,
     val current: Int,
-    val type: TaskType
+    val type: TaskType,
+    val isCompleted: Boolean = false
 )
 
 enum class TaskType {
