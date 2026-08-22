@@ -387,24 +387,29 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
         )
     }
 
-    // HIDDEN STORY RENDER LAYER (renders off-screen but stays active for capture)
+    // UNIVERSAL FIX: HIDDEN STORY RENDER LAYER
+    // We force a fixed density (3.0) so that 360dp x 640dp ALWAYS equals 1080px x 1920px
+    // regardless of the physical phone's screen density.
     Box(
         modifier = Modifier
             .size(1.dp)
             .graphicsLayer {
-                this.translationX = 10000f // Move way off-screen
+                this.translationX = 20000f // Move way off-screen
             }
             .drawWithCache {
                 onDrawWithContent {
-                    // Standard 9:16 high-res capture (1080 x 1920)
                     storyGraphicsLayer.record(androidx.compose.ui.unit.IntSize(1080, 1920)) {
                         this@onDrawWithContent.drawContent()
                     }
                 }
             }
     ) {
-        Box(modifier = Modifier.size(width = 360.dp, height = 640.dp)) { 
-            StoryShareCard(stats = uiState)
+        CompositionLocalProvider(
+            androidx.compose.ui.platform.LocalDensity provides androidx.compose.ui.unit.Density(3f)
+        ) {
+            Box(modifier = Modifier.size(width = 360.dp, height = 640.dp)) { 
+                StoryShareCard(stats = uiState)
+            }
         }
     }
 
