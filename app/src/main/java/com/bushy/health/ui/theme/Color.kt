@@ -98,26 +98,41 @@ val FemaleSurfaceVariantDark = Color(0xFF514347)
 val FemaleOnSurfaceVariantDark = Color(0xFFD5C2C6)
 val FemaleOutlineDark = Color(0xFF9E8C90)
 
-// Monochrome (Minimal White)
-val MonoPrimary = Color(0xFF000000)
-val MonoOnPrimary = Color(0xFFFFFFFF)
-val MonoPrimaryContainer = Color(0xFFE0E0E0)
-val MonoOnPrimaryContainer = Color(0xFF000000)
+// Monochrome (Nuanced & Expressive)
+val MonoBlack = Color(0xFF000000)
+val MonoBlackCharcoal = Color(0xFF121212)
+val MonoBlackDeep = Color(0xFF1A1C1E)
+val MonoGreyDark = Color(0xFF2C2C2C)
+val MonoGreyMedium = Color(0xFF757575)
+val MonoGreySubtle = Color(0xFF9E9E9E)
+val MonoGreyLight = Color(0xFFBDBDBD)
+val MonoGreySilver = Color(0xFFE0E0E0)
+val MonoGreyPlatinum = Color(0xFFEEEEEE)
+val MonoWhiteAlabaster = Color(0xFFF5F5F5)
+val MonoWhiteSnow = Color(0xFFFAFAFA)
+val MonoWhite = Color(0xFFFFFFFF)
 
-val MonoSecondary = Color(0xFF616161)
-val MonoOnSecondary = Color(0xFFFFFFFF)
-val MonoSecondaryContainer = Color(0xFFF5F5F5)
-val MonoOnSecondaryContainer = Color(0xFF212121)
+// Monochrome Scheme Mapping
+val MonoPrimary = MonoBlack
+val MonoOnPrimary = MonoWhite
+val MonoPrimaryContainer = MonoGreySilver
+val MonoOnPrimaryContainer = MonoBlackCharcoal
 
-val MonoTertiary = Color(0xFF424242)
-val MonoOnTertiary = Color(0xFFFFFFFF)
-val MonoTertiaryContainer = Color(0xFFEEEEEE)
-val MonoOnTertiaryContainer = Color(0xFF212121)
+val MonoSecondary = MonoGreyDark
+val MonoOnSecondary = MonoWhite
+val MonoSecondaryContainer = MonoWhiteAlabaster
+val MonoOnSecondaryContainer = MonoBlackDeep
 
-val MonoBackground = Color(0xFFFFFFFF)
-val MonoOnBackground = Color(0xFF000000)
-val MonoSurface = Color(0xFFFFFFFF)
-val MonoOnSurface = Color(0xFF000000)
-val MonoSurfaceVariant = Color(0xFFF5F5F5)
-val MonoOnSurfaceVariant = Color(0xFF424242)
-val MonoOutline = Color(0xFF757575)
+val MonoTertiary = MonoGreyMedium
+val MonoOnTertiary = MonoWhite
+val MonoTertiaryContainer = MonoGreyPlatinum
+val MonoOnTertiaryContainer = MonoBlackCharcoal
+
+val MonoBackground = MonoWhite
+val MonoOnBackground = MonoBlack
+val MonoSurface = MonoWhite
+val MonoOnSurface = MonoBlack
+val MonoSurfaceVariant = MonoWhiteSnow
+val MonoOnSurfaceVariant = MonoGreyDark
+val MonoOutline = MonoGreyMedium
+val MonoOutlineVariant = MonoGreyLight

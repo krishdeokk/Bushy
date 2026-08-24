@@ -5,7 +5,7 @@ enum class AvatarType {
 }
 
 enum class AvatarExpression {
-    NEUTRAL, HAPPY, EXCITED, WORKING_OUT, CELEBRATING, TIRED, ATTENTIVE, SURPRISED, LAUGHING, ANGRY
+    NEUTRAL, HAPPY, EXCITED, WORKING_OUT, CELEBRATING, TIRED, ATTENTIVE, SURPRISED, LAUGHING, ANGRY, THINKING
 }
 
 enum class ThemeMode {
@@ -29,7 +29,9 @@ data class UserStats(
     val avatarType: AvatarType = AvatarType.MALE,
     val expression: AvatarExpression = AvatarExpression.NEUTRAL,
     val syncMessage: String? = null,
-    val tasks: List<HealthTask> = emptyList()
+    val showChangelog: Boolean = false,
+    val tasks: List<HealthTask> = emptyList(),
+    val bushyAIHistory: List<BushyAIMessage> = emptyList()
 ) {
     val calories: Int get() = (steps * 0.04).toInt()
     
@@ -56,6 +58,13 @@ data class HealthTask(
     val current: Int,
     val type: TaskType,
     val isCompleted: Boolean = false
+)
+
+data class BushyAIMessage(
+    val text: String,
+    val isUser: Boolean,
+    val citations: List<String> = emptyList(),
+    val timestamp: Long = System.currentTimeMillis()
 )
 
 enum class TaskType {

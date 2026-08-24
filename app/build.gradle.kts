@@ -13,8 +13,8 @@ android {
         applicationId = "com.bushy.health"
         minSdk = 26
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -47,9 +47,11 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.health.connect)
     implementation(libs.androidx.material.icons.extended)
+    implementation(libs.material)
     implementation(libs.capturable)
     implementation(libs.coil.compose)
     implementation(libs.coil.gif)
+    implementation(libs.google.generativeai)
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

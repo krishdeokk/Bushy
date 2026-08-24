@@ -1,6 +1,7 @@
 package com.bushy.health.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -133,7 +134,7 @@ fun StoryShareCard(
                 LinearProgressIndicator(
                     progress = { stats.levelProgress },
                     modifier = Modifier
-                        .width(180.dp)
+                        .width(140.dp)
                         .height(6.dp)
                         .clip(CircleShape),
                     color = MaterialTheme.colorScheme.primary,
@@ -144,11 +145,22 @@ fun StoryShareCard(
                 Spacer(modifier = Modifier.weight(1f))
 
                 // Large Avatar
+                val isDark = when (stats.themeMode) {
+                    ThemeMode.LIGHT -> false
+                    ThemeMode.DARK -> true
+                    ThemeMode.SYSTEM -> isSystemInDarkTheme()
+                }
+                
+                val circleColor = when {
+                    stats.visualStyle == VisualStyle.MONOCHROME && isDark -> Color.White
+                    else -> MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f)
+                }
+
                 Box(
                     modifier = Modifier
-                        .size(260.dp)
+                        .size(180.dp)
                         .background(
-                            MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f),
+                            circleColor,
                             CircleShape
                         ),
                     contentAlignment = Alignment.Center
@@ -159,7 +171,7 @@ fun StoryShareCard(
                                 .data(gifResId)
                                 .build(),
                             contentDescription = null,
-                            modifier = Modifier.fillMaxSize(0.85f),
+                            modifier = Modifier.fillMaxSize(0.9f),
                             contentScale = ContentScale.Fit
                         )
                     }
@@ -184,7 +196,7 @@ fun StoryShareCard(
                             icon = Icons.Default.LocalFireDepartment,
                             value = "${stats.calories}",
                             label = "Calories",
-                            containerColor = Color(0xFFF9F9F9),
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -201,33 +213,13 @@ fun StoryShareCard(
                 Spacer(modifier = Modifier.weight(0.8f))
 
                 // Branding
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Surface(
-                        color = MaterialTheme.colorScheme.primary,
-                        shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.size(32.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text(
-                                "B",
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                fontWeight = FontWeight.Black,
-                                fontSize = 16.sp
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        "B U S H Y",
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = 6.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-                    )
-                }
+                Text(
+                    "B U S H Y",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 8.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                )
             }
         }
     }

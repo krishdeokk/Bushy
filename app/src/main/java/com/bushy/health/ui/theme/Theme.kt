@@ -104,27 +104,63 @@ private val FemaleDarkColorScheme = darkColorScheme(
 )
 
 private val MonoColorScheme = lightColorScheme(
-    primary = MonoPrimary,
-    onPrimary = MonoOnPrimary,
-    primaryContainer = MonoPrimaryContainer,
-    onPrimaryContainer = MonoOnPrimaryContainer,
-    secondary = MonoSecondary,
-    onSecondary = MonoOnSecondary,
-    secondaryContainer = MonoSecondaryContainer,
-    onSecondaryContainer = MonoOnSecondaryContainer,
-    tertiary = MonoTertiary,
-    onTertiary = MonoOnTertiary,
-    tertiaryContainer = MonoTertiaryContainer,
-    onTertiaryContainer = MonoOnTertiaryContainer,
-    background = MonoBackground,
-    onBackground = MonoOnBackground,
-    surface = MonoSurface,
-    onSurface = MonoOnSurface,
-    surfaceVariant = MonoSurfaceVariant,
-    onSurfaceVariant = MonoOnSurfaceVariant,
-    outline = MonoOutline,
-    surfaceContainerHigh = MonoSecondaryContainer,
-    surfaceContainerHighest = MonoPrimaryContainer
+    primary = MonoBlack,
+    onPrimary = MonoWhite,
+    primaryContainer = MonoGreyPlatinum,
+    onPrimaryContainer = MonoBlackCharcoal,
+    secondary = MonoGreyDark,
+    onSecondary = MonoWhite,
+    secondaryContainer = MonoWhiteAlabaster,
+    onSecondaryContainer = MonoBlackDeep,
+    tertiary = MonoGreyMedium,
+    onTertiary = MonoWhite,
+    tertiaryContainer = MonoGreySilver,
+    onTertiaryContainer = MonoBlackCharcoal,
+    background = MonoWhite,
+    onBackground = MonoBlack,
+    surface = MonoWhite,
+    onSurface = MonoBlack,
+    surfaceVariant = MonoWhiteSnow,
+    onSurfaceVariant = MonoGreyDark,
+    outline = MonoGreyMedium,
+    outlineVariant = MonoGreyLight,
+    surfaceContainerLow = MonoWhiteSnow,
+    surfaceContainer = MonoWhiteAlabaster,
+    surfaceContainerHigh = MonoGreyPlatinum,
+    surfaceContainerHighest = MonoGreySilver,
+    inverseSurface = MonoBlackDeep,
+    inverseOnSurface = MonoWhite,
+    inversePrimary = MonoGreyLight
+)
+
+private val MonoDarkColorScheme = darkColorScheme(
+    primary = MonoWhite,
+    onPrimary = MonoBlack,
+    primaryContainer = MonoGreyDark,
+    onPrimaryContainer = MonoWhite,
+    secondary = MonoGreyLight,
+    onSecondary = MonoBlack,
+    secondaryContainer = MonoBlackDeep,
+    onSecondaryContainer = MonoGreySilver,
+    tertiary = MonoGreySubtle,
+    onTertiary = MonoBlack,
+    tertiaryContainer = MonoBlackCharcoal,
+    onTertiaryContainer = MonoGreyPlatinum,
+    background = MonoBlack,
+    onBackground = MonoWhite,
+    surface = MonoBlackCharcoal,
+    onSurface = MonoWhite,
+    surfaceVariant = MonoBlackDeep,
+    onSurfaceVariant = MonoGreySilver,
+    outline = MonoGreySubtle,
+    outlineVariant = MonoGreyDark,
+    surfaceContainerLow = MonoBlackCharcoal,
+    surfaceContainer = MonoBlackDeep,
+    surfaceContainerHigh = MonoGreyDark,
+    surfaceContainerHighest = MonoGreyMedium,
+    inverseSurface = MonoWhite,
+    inverseOnSurface = MonoBlack,
+    inversePrimary = MonoBlack
 )
 
 @Composable
@@ -135,18 +171,15 @@ fun BushyTheme(
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val darkTheme = if (visualStyle == VisualStyle.MONOCHROME) {
-        false // Always White/Light as requested
-    } else {
-        when (themeMode) {
-            ThemeMode.LIGHT -> false
-            ThemeMode.DARK -> true
-            ThemeMode.SYSTEM -> isSystemInDarkTheme()
-        }
+    val darkTheme = when (themeMode) {
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
     }
 
     val colorScheme = when {
-        visualStyle == VisualStyle.MONOCHROME -> MonoColorScheme
+        visualStyle == VisualStyle.MONOCHROME && darkTheme -> MonoDarkColorScheme
+        visualStyle == VisualStyle.MONOCHROME && !darkTheme -> MonoColorScheme
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
@@ -162,7 +195,9 @@ fun BushyTheme(
         SideEffect {
             val window = (view.context as Activity).window
             window.statusBarColor = Color.Transparent.toArgb()
+            window.navigationBarColor = Color.Transparent.toArgb()
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+            WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = !darkTheme
         }
     }
 

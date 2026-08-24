@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "343988072133",
+    "project_id": "com-bushy-health-c1345",
+    "storage_bucket": "com-bushy-health-c1345.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:343988072133:android:739466d061acbc5b708aac",
+        "android_client_info": {
+          "package_name": "com.bushy.health"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCFIbr0d8Vk2S-7yld92aIbXW4Pfz_OtRg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

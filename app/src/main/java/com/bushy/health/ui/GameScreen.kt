@@ -8,9 +8,11 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -32,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asComposeRenderEffect
@@ -44,7 +47,9 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -73,7 +78,7 @@ fun GameScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
     var showAvatarSelection by remember { mutableStateOf(false) }
@@ -101,8 +106,10 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
         }
     }
 
-    val pagerState = rememberPagerState { 2 }
+    val pagerState = rememberPagerState { 3 }
     val scope = rememberCoroutineScope()
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
     val graphicsLayer = rememberGraphicsLayer()
     val storyGraphicsLayer = rememberGraphicsLayer()
 
@@ -124,38 +131,48 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(top = padding.calculateTopPadding())
                         .graphicsLayer {
                             val pageOffset = (pagerState.currentPage - page) + pagerState.currentPageOffsetFraction
-                            val alpha = 1f - (pageOffset.let { if (it < 0) -it else it }).coerceIn(0f, 1f)
+                            val fraction = pageOffset.coerceIn(-1f, 1f).let { if (it < 0) -it else it }
                             
-                            this.alpha = alpha
-                            val scale = 0.95f + (alpha * 0.05f)
+                            this.alpha = 1f - fraction
+                            val scale = 0.95f + (1f - fraction) * 0.05f
                             this.scaleX = scale
                             this.scaleY = scale
                         }
                 ) {
                     if (page == 0) {
                         Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .drawWithCache {
-                                    onDrawWithContent {
-                                        graphicsLayer.record {
-                                            this@onDrawWithContent.drawContent()
-                                        }
-                                        drawContent()
-                                    }
-                                }
+                            modifier = Modifier.fillMaxSize()
                         ) {
                             HomeScreen(uiState, viewModel)
                         }
-                    } else {
+                    } else if (page == 1) {
                         TasksScreen(
                             tasks = uiState.tasks, 
                             onTaskHold = { viewModel.incrementTask(it) },
                             onTaskReset = { viewModel.resetTask(it) },
                             onAddTask = { showAddTaskDialog = true }
+                        )
+                    } else {
+                        // Bushy Wushy AI Tab
+                        BushyAIScreen(
+                            userStats = uiState,
+                            isActive = pagerState.currentPage == 2,
+                            onExpressionChange = { viewModel.setExpressionDirectly(it) },
+                            onAvatarClick = {
+                                keyboardController?.hide()
+                                focusManager.clearFocus()
+                                scope.launch { 
+                                    pagerState.animateScrollToPage(
+                                        page = 0,
+                                        animationSpec = spring(
+                                            dampingRatio = Spring.DampingRatioLowBouncy,
+                                            stiffness = Spring.StiffnessLow
+                                        )
+                                    ) 
+                                }
+                            }
                         )
                     }
                 }
@@ -228,49 +245,47 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
                             }
                         )
 
-                        if (uiState.visualStyle == VisualStyle.MATERIAL3) {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(vertical = 8.dp, horizontal = 12.dp),
-                                thickness = 1.dp,
-                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                            )
-                            
-                            Text(
-                                "Theme Mode",
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Black,
-                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-                            )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 8.dp, horizontal = 12.dp),
+                            thickness = 1.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                        )
+                        
+                        Text(
+                            "Theme Mode",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Black,
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                        )
 
-                            ThemeMenuItem(
-                                label = "Light",
-                                icon = Icons.Default.LightMode,
-                                selected = uiState.themeMode == ThemeMode.LIGHT,
-                                onClick = { 
-                                    showOptionsMenu = false
-                                    viewModel.setThemeMode(ThemeMode.LIGHT) 
-                                }
-                            )
-                            ThemeMenuItem(
-                                label = "Dark",
-                                icon = Icons.Default.DarkMode,
-                                selected = uiState.themeMode == ThemeMode.DARK,
-                                onClick = { 
-                                    showOptionsMenu = false
-                                    viewModel.setThemeMode(ThemeMode.DARK) 
-                                }
-                            )
-                            ThemeMenuItem(
-                                label = "Auto",
-                                icon = Icons.Default.SettingsSuggest,
-                                selected = uiState.themeMode == ThemeMode.SYSTEM,
-                                onClick = { 
-                                    showOptionsMenu = false
-                                    viewModel.setThemeMode(ThemeMode.SYSTEM) 
-                                }
-                            )
-                        }
+                        ThemeMenuItem(
+                            label = "Light",
+                            icon = Icons.Default.LightMode,
+                            selected = uiState.themeMode == ThemeMode.LIGHT,
+                            onClick = { 
+                                showOptionsMenu = false
+                                viewModel.setThemeMode(ThemeMode.LIGHT) 
+                            }
+                        )
+                        ThemeMenuItem(
+                            label = "Dark",
+                            icon = Icons.Default.DarkMode,
+                            selected = uiState.themeMode == ThemeMode.DARK,
+                            onClick = { 
+                                showOptionsMenu = false
+                                viewModel.setThemeMode(ThemeMode.DARK) 
+                            }
+                        )
+                        ThemeMenuItem(
+                            label = "Auto",
+                            icon = Icons.Default.SettingsSuggest,
+                            selected = uiState.themeMode == ThemeMode.SYSTEM,
+                            onClick = { 
+                                showOptionsMenu = false
+                                viewModel.setThemeMode(ThemeMode.SYSTEM) 
+                            }
+                        )
                         
                         HorizontalDivider(
                             modifier = Modifier.padding(vertical = 8.dp, horizontal = 12.dp),
@@ -302,58 +317,91 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
                 }
             }
 
-            // PREMIUM SOLID FLOATING PILL
+            // DYNAMIC NAVIGATION PILL
+            val isBushyAITab = pagerState.currentPage == 2
+            val isKeyboardVisible = WindowInsets.isImeVisible
+            
+            val pillPadding by androidx.compose.animation.core.animateDpAsState(
+                targetValue = if (isBushyAITab) 120.dp else 32.dp,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioLowBouncy,
+                    stiffness = Spring.StiffnessLow
+                ),
+                label = "PillPadding"
+            )
+            val pillAlignment = if (isBushyAITab) Alignment.BottomEnd else Alignment.BottomCenter
+
             Box(
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
+                    .fillMaxSize()
                     .windowInsetsPadding(WindowInsets.navigationBars)
-                    .padding(bottom = 32.dp),
-                contentAlignment = Alignment.Center
+                    .padding(bottom = pillPadding, end = if (isBushyAITab) 24.dp else 0.dp),
+                contentAlignment = pillAlignment
             ) {
-                Surface(
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    shape = CircleShape,
-                    modifier = Modifier
-                        .wrapContentWidth()
-                        .height(72.dp),
-                    shadowElevation = 16.dp,
-                    border = androidx.compose.foundation.BorderStroke(
-                        1.dp, 
-                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                    )
-                ) {
-                    Row(
+                if (!isKeyboardVisible && !isBushyAITab) {
+                    Surface(
+                        onClick = { /* Pill items handle their own clicks */ },
+                        color = MaterialTheme.colorScheme.surface,
+                        shape = CircleShape,
+                        border = BorderStroke(
+                            width = 1.dp,
+                            color = if (uiState.visualStyle == VisualStyle.MONOCHROME) 
+                                MaterialTheme.colorScheme.onBackground
+                            else 
+                                MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                        ),
                         modifier = Modifier
-                            .padding(8.dp)
-                            .wrapContentWidth()
-                            .fillMaxHeight()
                             .animateContentSize(
                                 animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                    stiffness = Spring.StiffnessLow
+                                    dampingRatio = Spring.DampingRatioNoBouncy,
+                                    stiffness = Spring.StiffnessMedium
                                 )
-                            ),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
+                            )
+                            .wrapContentWidth()
+                            .height(72.dp),
+                        shadowElevation = 0.dp,
+                        tonalElevation = 0.dp
                     ) {
-                        PillTabItem(
-                            selected = pagerState.currentPage == 0,
-                            onClick = { scope.launch { pagerState.animateScrollToPage(0) } },
-                            label = "Home",
-                            icon = Icons.Default.Home,
-                            selectedColor = MaterialTheme.colorScheme.primary
-                        )
-                        PillTabItem(
-                            selected = pagerState.currentPage == 1,
-                            onClick = { scope.launch { pagerState.animateScrollToPage(1) } },
-                            label = "Tasks",
-                            icon = Icons.AutoMirrored.Filled.Assignment,
-                            selectedColor = MaterialTheme.colorScheme.primary
-                        )
+                        Row(
+                            modifier = Modifier
+                                .padding(6.dp)
+                                .wrapContentWidth()
+                                .fillMaxHeight(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            PillTabItem(
+                                selected = pagerState.currentPage == 0,
+                                onClick = { scope.launch { pagerState.animateScrollToPage(0) } },
+                                label = "Home",
+                                icon = Icons.Default.Home,
+                                selectedColor = MaterialTheme.colorScheme.primary
+                            )
+                            PillTabItem(
+                                selected = pagerState.currentPage == 1,
+                                onClick = { scope.launch { pagerState.animateScrollToPage(1) } },
+                                label = "Tasks",
+                                icon = Icons.AutoMirrored.Filled.Assignment,
+                                selectedColor = MaterialTheme.colorScheme.primary
+                            )
+                            PillTabItem(
+                                selected = pagerState.currentPage == 2,
+                                onClick = { scope.launch { pagerState.animateScrollToPage(2) } },
+                                label = "Bushy",
+                                icon = Icons.Default.AutoAwesome,
+                                selectedColor = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
                 }
             }
         }
+    }
+
+    if (uiState.showChangelog) {
+        ChangelogDialog(
+            onDismiss = { viewModel.dismissChangelog() }
+        )
     }
 
     if (showAvatarSelection) {
@@ -366,6 +414,10 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
         )
     }
 
+    // UNIVERSAL FIX: HIDDEN STORY RENDER LAYER
+    // Only record when sharing story to avoid per-frame overhead
+    var isSharingStory by remember { mutableStateOf(false) }
+
     if (showShareMenu) {
         ShareMenuDialog(
             onDismiss = { showShareMenu = false },
@@ -374,22 +426,26 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
                 showShareMenu = false
             },
             onShareStory = {
-                scope.launch {
-                    try {
-                        val bitmap = storyGraphicsLayer.toImageBitmap().asAndroidBitmap()
-                        com.bushy.health.ShareUtils.shareBitmap(context, bitmap, "My Bushy Story!")
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
-                showShareMenu = false
+                isSharingStory = true
             }
         )
     }
 
-    // UNIVERSAL FIX: HIDDEN STORY RENDER LAYER
-    // We force a fixed density (3.0) so that 360dp x 640dp ALWAYS equals 1080px x 1920px
-    // regardless of the physical phone's screen density.
+    if (isSharingStory) {
+        LaunchedEffect(Unit) {
+            // Give time for one frame to render and record
+            kotlinx.coroutines.delay(100)
+            try {
+                val bitmap = storyGraphicsLayer.toImageBitmap().asAndroidBitmap()
+                com.bushy.health.ShareUtils.shareBitmap(context, bitmap, "My Bushy Story!")
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            isSharingStory = false
+            showShareMenu = false
+        }
+    }
+
     Box(
         modifier = Modifier
             .size(1.dp)
@@ -398,8 +454,10 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
             }
             .drawWithCache {
                 onDrawWithContent {
-                    storyGraphicsLayer.record(androidx.compose.ui.unit.IntSize(1080, 1920)) {
-                        this@onDrawWithContent.drawContent()
+                    if (isSharingStory) {
+                        storyGraphicsLayer.record(androidx.compose.ui.unit.IntSize(1080, 1920)) {
+                            this@onDrawWithContent.drawContent()
+                        }
                     }
                 }
             }
@@ -646,8 +704,8 @@ fun HomeScreen(
     viewModel: GameViewModel
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 0.dp, bottom = 120.dp),
+        modifier = Modifier.fillMaxSize().statusBarsPadding(),
+        contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 120.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(32.dp)
     ) {
@@ -656,6 +714,7 @@ fun HomeScreen(
                 type = uiState.avatarType,
                 expression = uiState.expression,
                 visualStyle = uiState.visualStyle,
+                themeMode = uiState.themeMode,
                 userName = uiState.userName,
                 onAvatarTap = { viewModel.onAvatarTap() },
                 onAvatarDoubleTap = { viewModel.onAvatarDoubleTap() }
@@ -686,7 +745,7 @@ fun HomeScreen(
 
 @Composable
 fun TasksScreen(tasks: List<com.bushy.health.HealthTask>, onTaskHold: (String) -> Unit, onTaskReset: (String) -> Unit, onAddTask: () -> Unit) {
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 120.dp),
@@ -741,14 +800,18 @@ fun PillTabItem(
         modifier = modifier.fillMaxHeight()
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 28.dp),
+            modifier = Modifier.padding(horizontal = 32.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            Icon(icon, contentDescription = null, modifier = Modifier.size(28.dp))
+            Icon(icon, contentDescription = null, modifier = Modifier.size(24.dp))
             if (selected) {
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(label, fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.labelLarge)
+                Text(
+                    label, 
+                    fontWeight = FontWeight.Bold, 
+                    style = MaterialTheme.typography.titleSmall
+                )
             }
         }
     }
@@ -819,7 +882,7 @@ fun TaskCard(task: com.bushy.health.HealthTask, onHold: () -> Unit, onReset: () 
                         )
                     }
                 },
-            shape = RoundedCornerShape(32.dp),
+            shape = RoundedCornerShape(48.dp),
             colors = CardDefaults.elevatedCardColors(containerColor = containerColor)
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
@@ -906,11 +969,21 @@ fun AvatarSection(
     type: AvatarType,
     expression: AvatarExpression,
     visualStyle: VisualStyle,
+    themeMode: ThemeMode,
     userName: String,
     onAvatarTap: () -> Unit,
     onAvatarDoubleTap: () -> Unit
 ) {
     val context = LocalContext.current
+    val systemInDarkTheme = isSystemInDarkTheme()
+    val isDark = remember(themeMode, systemInDarkTheme) {
+        when (themeMode) {
+            ThemeMode.LIGHT -> false
+            ThemeMode.DARK -> true
+            ThemeMode.SYSTEM -> systemInDarkTheme
+        }
+    }
+    
     val vibrator = remember {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val vibratorManager = context.getSystemService(VibratorManager::class.java)
@@ -976,6 +1049,30 @@ fun AvatarSection(
                 },
             contentAlignment = Alignment.Center
         ) {
+            // Background Circle
+            when {
+                visualStyle == VisualStyle.MATERIAL3 -> {
+                    Box(
+                        modifier = Modifier
+                            .size(320.dp)
+                            .background(
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f),
+                                CircleShape
+                            )
+                    )
+                }
+                visualStyle == VisualStyle.MONOCHROME && isDark -> {
+                    Box(
+                        modifier = Modifier
+                            .size(320.dp)
+                            .background(
+                                Color.White,
+                                CircleShape
+                            )
+                    )
+                }
+            }
+
             if (gifResId != null) {
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
@@ -984,7 +1081,7 @@ fun AvatarSection(
                         .build(),
                     imageLoader = imageLoader,
                     contentDescription = "Bushy Avatar",
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.size(280.dp),
                     contentScale = ContentScale.Fit
                 )
             } else {
@@ -1075,7 +1172,7 @@ fun StatCard(
     
     ElevatedCard(
         modifier = modifier,
-        shape = RoundedCornerShape(32.dp),
+        shape = RoundedCornerShape(48.dp),
         colors = CardDefaults.elevatedCardColors(containerColor = containerColor)
     ) {
         Column(
@@ -1241,6 +1338,71 @@ fun AvatarOption(
                 type.name, 
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+@Composable
+fun ChangelogDialog(onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = { Icon(Icons.Default.Celebration, null, modifier = Modifier.size(32.dp), tint = MaterialTheme.colorScheme.primary) },
+        title = { 
+            Text(
+                "What's New in Bushy", 
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.ExtraBold
+            ) 
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                ChangelogItem(
+                    title = "Bushy Wushy AI",
+                    description = "Meet your new Gemini-powered fitness guide. Tap the Sage tab to start chatting!"
+                )
+                ChangelogItem(
+                    title = "Portrait Mode Only",
+                    description = "Optimized layout locked to portrait for a better, more consistent experience."
+                )
+                ChangelogItem(
+                    title = "Mono Dark Theme",
+                    description = "Love the minimal look? We've added full Dark Mode support for the Monochrome style."
+                )
+                ChangelogItem(
+                    title = "Buttery Smooth UI",
+                    description = "Redesigned navigation and optimized animations for a fluid feel."
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onDismiss,
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Let's Go!")
+            }
+        },
+        shape = RoundedCornerShape(32.dp)
+    )
+}
+
+@Composable
+fun ChangelogItem(title: String, description: String) {
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Box(
+            modifier = Modifier
+                .size(8.dp)
+                .offset(y = 8.dp)
+                .background(MaterialTheme.colorScheme.primary, CircleShape)
+        )
+        Column {
+            Text(title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
+            Text(
+                description, 
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

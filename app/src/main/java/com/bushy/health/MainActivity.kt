@@ -1,5 +1,6 @@
 package com.bushy.health
 
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -12,6 +13,7 @@ import androidx.activity.viewModels
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.core.view.WindowCompat
 import androidx.health.connect.client.PermissionController
 import com.bushy.health.ui.GameScreen
 import com.bushy.health.ui.theme.BushyTheme
@@ -21,7 +23,15 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Ensure the window doesn't fit system windows so we can handle insets in Compose
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         enableEdgeToEdge()
+        
+        // Disable enforced contrast for the navigation bar to allow the app to draw its own background
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            window.isNavigationBarContrastEnforced = false
+        }
         
         val healthManager = HealthManager(this)
         val requestPermissionActivityContract = PermissionController.createRequestPermissionResultContract()
