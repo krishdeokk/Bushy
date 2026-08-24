@@ -136,7 +136,7 @@ fun BushyAIScreen(
             Box(modifier = Modifier.weight(1f)) {
                 val isImeVisible = WindowInsets.isImeVisible
                 if (messages.isEmpty() && !isGenerating && !isImeVisible) {
-                    EmptyStateMessage()
+                    // EmptyStateMessage is now handled separately to be perfectly centered
                 } else {
                     LazyColumn(
                         state = listState,
@@ -157,6 +157,12 @@ fun BushyAIScreen(
                     }
                 }
             }
+        }
+
+        // NEW: Perfectly Centered Empty State
+        val isImeVisible = WindowInsets.isImeVisible
+        if (messages.isEmpty() && !isGenerating && !isImeVisible) {
+            EmptyStateMessage()
         }
 
         // 2. FIXED HEADER (Aligned Top)
