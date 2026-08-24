@@ -305,15 +305,17 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
                     }
                 }
 
-                IconButton(
-                    onClick = { showShareMenu = true },
-                    modifier = Modifier.align(Alignment.CenterEnd)
-                ) {
-                    Icon(
-                        Icons.Default.Share, 
-                        contentDescription = "Share",
-                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                    )
+                if (pagerState.currentPage == 0) {
+                    IconButton(
+                        onClick = { showShareMenu = true },
+                        modifier = Modifier.align(Alignment.CenterEnd)
+                    ) {
+                        Icon(
+                            Icons.Default.Share, 
+                            contentDescription = "Share",
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        )
+                    }
                 }
             }
 
@@ -1245,7 +1247,7 @@ fun ActionSection(onRefresh: () -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(64.dp),
-            shape = RoundedCornerShape(20.dp),
+            shape = CircleShape,
             contentPadding = PaddingValues(16.dp)
         ) {
             Icon(Icons.Default.Sync, contentDescription = null)
