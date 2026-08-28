@@ -725,8 +725,8 @@ fun LevelHeader(stats: UserStats) {
         ) {
             Surface(
                 color = MaterialTheme.colorScheme.primary,
-                shape = RoundedCornerShape(16.dp, 10.dp, 16.dp, 16.dp),
-                modifier = Modifier.size(width = 92.dp, height = 36.dp)
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.size(width = 80.dp, height = 32.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
@@ -1403,7 +1403,7 @@ fun ChangelogDialog(onDismiss: () -> Unit) {
                 Text("Let's Go!")
             }
         },
-        shape = MaterialExpressiveShapes.clover4
+        shape = RoundedCornerShape(32.dp)
     )
 }
 
