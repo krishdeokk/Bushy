@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
@@ -190,14 +191,16 @@ fun StoryShareCard(
                             value = "${stats.steps}",
                             label = "Steps",
                             containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(28.dp, 14.dp, 24.dp, 24.dp)
                         )
                         StoryStatItem(
                             icon = Icons.Default.LocalFireDepartment,
                             value = "${stats.calories}",
                             label = "Calories",
                             containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(14.dp, 28.dp, 24.dp, 24.dp)
                         )
                     }
 
@@ -206,7 +209,8 @@ fun StoryShareCard(
                         value = "${stats.xp} XP Total",
                         label = "Overall Progress",
                         containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp, 28.dp, 20.dp, 28.dp)
                     )
                 }
 
@@ -231,7 +235,8 @@ fun StoryStatItem(
     value: String,
     label: String,
     containerColor: Color,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    shape: CornerBasedShape = RoundedCornerShape(24.dp)
 ) {
     val contentColor = if (containerColor == MaterialTheme.colorScheme.background) {
         MaterialTheme.colorScheme.onBackground
@@ -241,7 +246,7 @@ fun StoryStatItem(
     
     Surface(
         color = containerColor,
-        shape = RoundedCornerShape(20.dp),
+        shape = shape,
         modifier = modifier
     ) {
         Row(

@@ -38,14 +38,14 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             visualStyle = VisualStyle.valueOf(prefs.getString("visual_style", VisualStyle.MATERIAL3.name) ?: VisualStyle.MATERIAL3.name),
             xp = prefs.getLong("xp", 0L),
             avatarType = AvatarType.valueOf(prefs.getString("avatar_type", AvatarType.MALE.name) ?: AvatarType.MALE.name),
-            showChangelog = prefs.getInt("last_seen_version", 1) < 2,
+            showChangelog = prefs.getInt("last_seen_version", 1) < 3,
             tasks = emptyList() // Tasks could be persisted too, but keeping it simple for now
         )
     }
 
     fun dismissChangelog() {
         _uiState.update { it.copy(showChangelog = false) }
-        prefs.edit().putInt("last_seen_version", 2).apply()
+        prefs.edit().putInt("last_seen_version", 3).apply()
     }
 
     private fun saveStats(state: UserStats) {

@@ -36,6 +36,7 @@ import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
 import com.bushy.health.*
+import com.bushy.health.ui.bloub.BloubAvatar
 import android.os.Build
 import kotlinx.coroutines.launch
 
@@ -53,37 +54,10 @@ fun BushyAIScreen(
     val isUserTyping by viewModel.isUserTyping.collectAsState()
     
     val context = LocalContext.current
-    val imageLoader = remember {
-        ImageLoader.Builder(context)
-            .components {
-                if (Build.VERSION.SDK_INT >= 28) {
-                    add(ImageDecoderDecoder.Factory())
-                } else {
-                    add(GifDecoder.Factory())
-                }
-            }
-            .build()
-    }
-
     val currentExpression = when {
         isGenerating -> AvatarExpression.THINKING
         isUserTyping -> AvatarExpression.ATTENTIVE
         else -> userStats.expression
-    }
-
-    val gifName = remember(userStats.avatarType, currentExpression, userStats.visualStyle) {
-        val expr = currentExpression.name.lowercase()
-        if (userStats.visualStyle == VisualStyle.MONOCHROME) {
-            "mono_${expr}"
-        } else {
-            val gender = userStats.avatarType.name.lowercase()
-            "${gender}_${expr}"
-        }
-    }
-    
-    val gifResId = remember(gifName) {
-        val id = context.resources.getIdentifier(gifName, "drawable", context.packageName)
-        if (id != 0) id else null
     }
 
     var inputText by remember { mutableStateOf("") }
@@ -220,20 +194,6 @@ fun BushyAIScreen(
                 ) {
 
                     // Avatar
-                    val systemInDarkTheme = isSystemInDarkTheme()
-                    val isDark = remember(userStats.themeMode, systemInDarkTheme) {
-                        when (userStats.themeMode) {
-                            ThemeMode.LIGHT -> false
-                            ThemeMode.DARK -> true
-                            ThemeMode.SYSTEM -> systemInDarkTheme
-                        }
-                    }
-                    val avatarBgColor = when {
-                        userStats.visualStyle == VisualStyle.MATERIAL3 -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)
-                        userStats.visualStyle == VisualStyle.MONOCHROME && isDark -> Color.White
-                        else -> Color.Transparent
-                    }
-
                     Box(
                         modifier = Modifier
                             .size(56.dp)
@@ -242,24 +202,15 @@ fun BushyAIScreen(
                                 scaleY = animatedAvatarScale
                             }
                             .clip(CircleShape)
-                            .clickable { onAvatarClick() }
-                            .background(
-                                avatarBgColor,
-                                CircleShape
-                            ),
+                            .clickable { onAvatarClick() },
                         contentAlignment = Alignment.Center
                     ) {
-                        if (gifResId != null) {
-                            AsyncImage(
-                                model = ImageRequest.Builder(LocalContext.current)
-                                    .data(gifResId)
-                                    .build(),
-                                imageLoader = imageLoader,
-                                contentDescription = null,
-                                modifier = Modifier.fillMaxSize(0.9f),
-                                contentScale = ContentScale.Fit
-                            )
-                        }
+                        BloubAvatar(
+                            expression = currentExpression,
+                            visualStyle = userStats.visualStyle,
+                            themeMode = userStats.themeMode,
+                            modifier = Modifier.fillMaxSize()
+                        )
                     }
 
                     OutlinedTextField(
@@ -286,6 +237,7 @@ fun BushyAIScreen(
                             inputText = ""
                         },
                         modifier = Modifier.size(52.dp),
+                        shape = CircleShape,
                         enabled = inputText.isNotBlank() && !isGenerating
                     ) {
                         Icon(
@@ -337,9 +289,9 @@ fun ChatBubble(message: BushyAIMessage) {
     val bubbleColor = if (message.isUser) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondaryContainer
     val textColor = if (message.isUser) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondaryContainer
     val shape = if (message.isUser) {
-        RoundedCornerShape(20.dp, 4.dp, 20.dp, 20.dp)
+        RoundedCornerShape(24.dp, 24.dp, 6.dp, 24.dp)
     } else {
-        RoundedCornerShape(4.dp, 20.dp, 20.dp, 20.dp)
+        RoundedCornerShape(24.dp, 24.dp, 24.dp, 6.dp)
     }
 
     Box(
@@ -371,7 +323,7 @@ fun GeneratingIndicator() {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Card(
-            shape = RoundedCornerShape(4.dp, 20.dp, 20.dp, 20.dp),
+            shape = RoundedCornerShape(24.dp, 24.dp, 24.dp, 6.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
             )

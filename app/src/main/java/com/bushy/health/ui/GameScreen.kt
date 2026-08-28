@@ -6,6 +6,7 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
@@ -19,6 +20,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Assignment
@@ -32,10 +34,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.graphicsLayer
@@ -44,6 +48,7 @@ import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -60,6 +65,8 @@ import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
 import com.bushy.health.*
+import com.bushy.health.ui.bloub.BloubAvatar
+import com.bushy.health.ui.theme.MaterialExpressiveShapes
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -142,10 +149,26 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
                         }
                 ) {
                     if (page == 0) {
-                        Column(
-                            modifier = Modifier.fillMaxSize()
+                        var homeTouchPosition by remember { mutableStateOf<Offset?>(null) }
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .pointerInput(Unit) {
+                                    awaitPointerEventScope {
+                                        while (true) {
+                                            val event = awaitPointerEvent(pass = PointerEventPass.Initial)
+                                            val position = event.changes.firstOrNull()?.position
+                                            val pressed = event.changes.any { it.pressed }
+                                            homeTouchPosition = if (pressed && position != null) position else null
+                                        }
+                                    }
+                                }
                         ) {
-                            HomeScreen(uiState, viewModel)
+                            HomeScreen(
+                                uiState = uiState,
+                                viewModel = viewModel,
+                                externalTouchPositionInWindow = homeTouchPosition
+                            )
                         }
                     } else if (page == 1) {
                         TasksScreen(
@@ -187,12 +210,23 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
             ) {
                 Box(modifier = Modifier.align(Alignment.CenterStart)) {
                     if (pagerState.currentPage == 0) {
+                        val needsSync = uiState.syncMessage != null
                         IconButton(onClick = { showOptionsMenu = true }) {
-                            Icon(
-                                Icons.Default.MoreVert, 
-                                contentDescription = "Options",
-                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                            )
+                            Box {
+                                Icon(
+                                    Icons.Default.MoreVert, 
+                                    contentDescription = "Options",
+                                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                )
+                                if (needsSync) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(8.dp)
+                                            .align(Alignment.TopEnd)
+                                            .background(MaterialTheme.colorScheme.error, CircleShape)
+                                    )
+                                }
+                            }
                         }
                     }
                     
@@ -203,6 +237,33 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
                         shape = RoundedCornerShape(24.dp),
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                     ) {
+                        DropdownMenuItem(
+                            text = { 
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text("Sync Activity", fontWeight = FontWeight.Medium)
+                                    if (uiState.syncMessage != null) {
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Box(
+                                            modifier = Modifier
+                                                .size(6.dp)
+                                                .background(MaterialTheme.colorScheme.error, CircleShape)
+                                        )
+                                    }
+                                }
+                            },
+                            leadingIcon = { Icon(Icons.Default.Sync, null, tint = MaterialTheme.colorScheme.primary) },
+                            onClick = { 
+                                showOptionsMenu = false
+                                viewModel.refreshStats() 
+                            }
+                        )
+
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 8.dp, horizontal = 12.dp),
+                            thickness = 1.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                        )
+
                         DropdownMenuItem(
                             text = { Text("Switch Hero", fontWeight = FontWeight.Medium) },
                             leadingIcon = { Icon(Icons.Default.Face, null, tint = MaterialTheme.colorScheme.primary) },
@@ -560,6 +621,7 @@ fun AddTaskDialog(onDismiss: () -> Unit, onAdd: (String, Int, com.bushy.health.T
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        shape = MaterialExpressiveShapes.cookie4,
         title = { Text("New Mission", fontWeight = FontWeight.ExtraBold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -619,6 +681,7 @@ fun ShareMenuDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
+        shape = MaterialExpressiveShapes.cookie9,
         title = { Text("Share Your Progress") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -662,8 +725,8 @@ fun LevelHeader(stats: UserStats) {
         ) {
             Surface(
                 color = MaterialTheme.colorScheme.primary,
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.size(width = 80.dp, height = 32.dp)
+                shape = RoundedCornerShape(16.dp, 10.dp, 16.dp, 16.dp),
+                modifier = Modifier.size(width = 92.dp, height = 36.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
@@ -703,7 +766,8 @@ fun LevelHeader(stats: UserStats) {
 @Composable
 fun HomeScreen(
     uiState: UserStats,
-    viewModel: GameViewModel
+    viewModel: GameViewModel,
+    externalTouchPositionInWindow: Offset? = null
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize().statusBarsPadding(),
@@ -718,6 +782,7 @@ fun HomeScreen(
                 visualStyle = uiState.visualStyle,
                 themeMode = uiState.themeMode,
                 userName = uiState.userName,
+                externalTouchPositionInWindow = externalTouchPositionInWindow,
                 onAvatarTap = { viewModel.onAvatarTap() },
                 onAvatarDoubleTap = { viewModel.onAvatarDoubleTap() }
             )
@@ -735,12 +800,6 @@ fun HomeScreen(
 
         item {
             StatsGrid(uiState)
-        }
-
-        item {
-            ActionSection(
-                onRefresh = { viewModel.refreshStats() }
-            )
         }
     }
 }
@@ -775,10 +834,10 @@ fun TasksScreen(tasks: List<com.bushy.health.HealthTask>, onTaskHold: (String) -
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(bottom = 140.dp, end = 24.dp)
-                .size(96.dp),
+                .size(92.dp),
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary,
-            shape = CircleShape
+            shape = MaterialExpressiveShapes.cookie9
         ) {
             Icon(Icons.Default.Add, "Add Mission", modifier = Modifier.size(48.dp))
         }
@@ -839,6 +898,22 @@ fun TaskCard(task: com.bushy.health.HealthTask, onHold: () -> Unit, onReset: () 
         label = "TaskProgress"
     )
 
+    val scale by animateFloatAsState(
+        targetValue = if (isPressing) 0.97f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        label = "TaskCardScale"
+    )
+
+    val cornerRadius by animateDpAsState(
+        targetValue = when {
+            isPressing -> 18.dp
+            task.isCompleted -> 32.dp
+            else -> 36.dp
+        },
+        animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow),
+        label = "TaskCardCorner"
+    )
+
     LaunchedEffect(isPressing) {
         if (isPressing && !task.isCompleted) {
             while (isPressing && !task.isCompleted) {
@@ -869,6 +944,10 @@ fun TaskCard(task: com.bushy.health.HealthTask, onHold: () -> Unit, onReset: () 
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                }
                 .pointerInput(task.id, task.isCompleted) {
                     if (!task.isCompleted) {
                         detectTapGestures(
@@ -884,7 +963,12 @@ fun TaskCard(task: com.bushy.health.HealthTask, onHold: () -> Unit, onReset: () 
                         )
                     }
                 },
-            shape = RoundedCornerShape(48.dp),
+            shape = RoundedCornerShape(
+                topStart = cornerRadius,
+                topEnd = if (task.isCompleted) 16.dp else cornerRadius,
+                bottomEnd = cornerRadius,
+                bottomStart = cornerRadius
+            ),
             colors = CardDefaults.elevatedCardColors(containerColor = containerColor)
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
@@ -973,19 +1057,11 @@ fun AvatarSection(
     visualStyle: VisualStyle,
     themeMode: ThemeMode,
     userName: String,
+    externalTouchPositionInWindow: Offset? = null,
     onAvatarTap: () -> Unit,
     onAvatarDoubleTap: () -> Unit
 ) {
     val context = LocalContext.current
-    val systemInDarkTheme = isSystemInDarkTheme()
-    val isDark = remember(themeMode, systemInDarkTheme) {
-        when (themeMode) {
-            ThemeMode.LIGHT -> false
-            ThemeMode.DARK -> true
-            ThemeMode.SYSTEM -> systemInDarkTheme
-        }
-    }
-    
     val vibrator = remember {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val vibratorManager = context.getSystemService(VibratorManager::class.java)
@@ -1003,33 +1079,6 @@ fun AvatarSection(
             @Suppress("DEPRECATION")
             vibrator.vibrate(15)
         }
-    }
-
-    val imageLoader = remember {
-        ImageLoader.Builder(context)
-            .components {
-                if (Build.VERSION.SDK_INT >= 28) {
-                    add(ImageDecoderDecoder.Factory())
-                } else {
-                    add(GifDecoder.Factory())
-                }
-            }
-            .build()
-    }
-
-    val gifName = remember(type, expression, visualStyle) {
-        val expr = expression.name.lowercase()
-        if (visualStyle == VisualStyle.MONOCHROME) {
-            "mono_${expr}"
-        } else {
-            val gender = type.name.lowercase()
-            "${gender}_${expr}"
-        }
-    }
-    
-    val gifResId = remember(gifName) {
-        val id = context.resources.getIdentifier(gifName, "drawable", context.packageName)
-        if (id != 0) id else null
     }
 
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
@@ -1051,50 +1100,13 @@ fun AvatarSection(
                 },
             contentAlignment = Alignment.Center
         ) {
-            // Background Circle
-            when {
-                visualStyle == VisualStyle.MATERIAL3 -> {
-                    Box(
-                        modifier = Modifier
-                            .size(320.dp)
-                            .background(
-                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f),
-                                CircleShape
-                            )
-                    )
-                }
-                visualStyle == VisualStyle.MONOCHROME && isDark -> {
-                    Box(
-                        modifier = Modifier
-                            .size(320.dp)
-                            .background(
-                                Color.White,
-                                CircleShape
-                            )
-                    )
-                }
-            }
-
-            if (gifResId != null) {
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(gifResId)
-                        .crossfade(800)
-                        .build(),
-                    imageLoader = imageLoader,
-                    contentDescription = "Bushy Avatar",
-                    modifier = Modifier.size(280.dp),
-                    contentScale = ContentScale.Fit
-                )
-            } else {
-                // Fallback placeholder
-                Icon(
-                    imageVector = if (type == AvatarType.MALE) Icons.Default.Face else Icons.Default.Face6,
-                    contentDescription = "Avatar Placeholder",
-                    modifier = Modifier.size(280.dp),
-                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-                )
-            }
+            BloubAvatar(
+                expression = expression,
+                visualStyle = visualStyle,
+                themeMode = themeMode,
+                externalTouchPositionInWindow = externalTouchPositionInWindow,
+                modifier = Modifier.size(360.dp)
+            )
         }
         
         Spacer(modifier = Modifier.height(8.dp))
@@ -1122,14 +1134,16 @@ fun StatsGrid(stats: UserStats) {
                 icon = Icons.AutoMirrored.Filled.DirectionsWalk,
                 value = "${stats.steps}",
                 label = "Steps",
-                containerColor = MaterialTheme.colorScheme.primaryContainer
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                shape = RoundedCornerShape(36.dp, 16.dp, 28.dp, 28.dp)
             )
             StatCard(
                 modifier = Modifier.weight(1f),
                 icon = Icons.Default.LocalFireDepartment,
                 value = "${stats.calories}",
                 label = "Calories",
-                containerColor = MaterialTheme.colorScheme.secondaryContainer
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                shape = RoundedCornerShape(16.dp, 36.dp, 28.dp, 28.dp)
             )
         }
         StatCard(
@@ -1137,7 +1151,8 @@ fun StatsGrid(stats: UserStats) {
             icon = Icons.Default.Star,
             value = "${stats.xp}",
             label = "Total XP Earned",
-            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+            shape = RoundedCornerShape(28.dp, 28.dp, 16.dp, 36.dp)
         )
         
         Row(
@@ -1149,14 +1164,16 @@ fun StatsGrid(stats: UserStats) {
                 icon = Icons.Default.Cake,
                 value = if (stats.age > 0) "${stats.age}" else "--",
                 label = "Age",
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                shape = RoundedCornerShape(28.dp, 28.dp, 16.dp, 36.dp)
             )
             StatCard(
                 modifier = Modifier.weight(1f),
                 icon = Icons.Default.Height,
                 value = if (stats.height > 0) "${stats.height}cm" else "--",
                 label = "Height",
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                shape = RoundedCornerShape(28.dp, 28.dp, 36.dp, 16.dp)
             )
         }
     }
@@ -1168,13 +1185,37 @@ fun StatCard(
     icon: ImageVector,
     value: String,
     label: String,
-    containerColor: Color
+    containerColor: Color,
+    shape: Shape = MaterialExpressiveShapes.asymmetric1
 ) {
     val contentColor = contentColorFor(containerColor)
-    
+    var isPressed by remember { mutableStateOf(false) }
+
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.96f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        label = "StatCardScale"
+    )
+
     ElevatedCard(
-        modifier = modifier,
-        shape = RoundedCornerShape(48.dp),
+        modifier = modifier
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onPress = {
+                        isPressed = true
+                        try {
+                            awaitRelease()
+                        } finally {
+                            isPressed = false
+                        }
+                    }
+                )
+            },
+        shape = shape,
         colors = CardDefaults.elevatedCardColors(containerColor = containerColor)
     ) {
         Column(
@@ -1237,31 +1278,6 @@ fun SyncStatusCard(message: String) {
 }
 
 @Composable
-fun ActionSection(onRefresh: () -> Unit) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Button(
-            onClick = onRefresh,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(64.dp),
-            shape = CircleShape,
-            contentPadding = PaddingValues(16.dp)
-        ) {
-            Icon(Icons.Default.Sync, contentDescription = null)
-            Spacer(modifier = Modifier.width(12.dp))
-            Text(
-                "Sync Activity", 
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-        }
-    }
-}
-
-@Composable
 fun AvatarSelectionDialog(onDismiss: () -> Unit, onSelect: (AvatarType) -> Unit) {
     val context = LocalContext.current
     val imageLoader = remember {
@@ -1278,6 +1294,7 @@ fun AvatarSelectionDialog(onDismiss: () -> Unit, onSelect: (AvatarType) -> Unit)
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        shape = MaterialExpressiveShapes.softBurst,
         title = { Text("Choose Your Hero", fontWeight = FontWeight.ExtraBold) },
         text = {
             Row(
@@ -1319,7 +1336,7 @@ fun AvatarOption(
     OutlinedCard(
         onClick = { onSelect(type) },
         modifier = modifier.aspectRatio(0.8f),
-        shape = RoundedCornerShape(32.dp)
+        shape = MaterialExpressiveShapes.cookie4
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -1360,20 +1377,20 @@ fun ChangelogDialog(onDismiss: () -> Unit) {
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 ChangelogItem(
-                    title = "Bushy Wushy AI",
-                    description = "Meet your new Gemini-powered fitness guide. Tap the Sage tab to start chatting!"
+                    title = "Interactive Vector Avatar",
+                    description = "Bushy is now a 60/120 FPS procedural avatar! Its eyes follow your touch anywhere on the screen in real-time."
                 )
                 ChangelogItem(
-                    title = "Portrait Mode Only",
-                    description = "Optimized layout locked to portrait for a better, more consistent experience."
+                    title = "Material 3 Expressive Shapes",
+                    description = "Unique shapes for every card! Enjoy 4 & 9-sided cookies, 4-leaf clovers, starbursts, and arches."
                 )
                 ChangelogItem(
-                    title = "Mono Dark Theme",
-                    description = "Love the minimal look? We've added full Dark Mode support for the Monochrome style."
+                    title = "Smart Sync & Notifications",
+                    description = "Sync is now in the top-left menu with a red-dot alert when activity data needs syncing."
                 )
                 ChangelogItem(
-                    title = "Buttery Smooth UI",
-                    description = "Redesigned navigation and optimized animations for a fluid feel."
+                    title = "Bushy Wushy AI & Mono Dark",
+                    description = "Enhanced AI companion with 30-key rotation, thinking animations, and full Mono Dark theme support."
                 )
             }
         },
@@ -1386,7 +1403,7 @@ fun ChangelogDialog(onDismiss: () -> Unit) {
                 Text("Let's Go!")
             }
         },
-        shape = RoundedCornerShape(32.dp)
+        shape = MaterialExpressiveShapes.clover4
     )
 }
 
