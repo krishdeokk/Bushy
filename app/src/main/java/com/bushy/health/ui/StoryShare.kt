@@ -28,29 +28,13 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.bushy.health.*
+import com.bushy.health.ui.bloub.BloubAvatar
 
 @Composable
 fun StoryShareCard(
     stats: UserStats,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
-    
-    val gifName = remember(stats.avatarType, stats.expression, stats.visualStyle) {
-        val expr = stats.expression.name.lowercase()
-        if (stats.visualStyle == VisualStyle.MONOCHROME) {
-            "mono_${expr}"
-        } else {
-            val gender = stats.avatarType.name.lowercase()
-            "${gender}_${expr}"
-        }
-    }
-    
-    val gifResId = remember(gifName) {
-        val id = context.resources.getIdentifier(gifName, "drawable", context.packageName)
-        if (id != 0) id else null
-    }
-
     // 9:16 Aspect Ratio container
     Surface(
         modifier = modifier.fillMaxSize(),
@@ -146,37 +130,12 @@ fun StoryShareCard(
                 Spacer(modifier = Modifier.weight(1f))
 
                 // Large Avatar
-                val isDark = when (stats.themeMode) {
-                    ThemeMode.LIGHT -> false
-                    ThemeMode.DARK -> true
-                    ThemeMode.SYSTEM -> isSystemInDarkTheme()
-                }
-                
-                val circleColor = when {
-                    stats.visualStyle == VisualStyle.MONOCHROME && isDark -> Color.White
-                    else -> MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f)
-                }
-
-                Box(
-                    modifier = Modifier
-                        .size(180.dp)
-                        .background(
-                            circleColor,
-                            CircleShape
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (gifResId != null) {
-                        AsyncImage(
-                            model = ImageRequest.Builder(LocalContext.current)
-                                .data(gifResId)
-                                .build(),
-                            contentDescription = null,
-                            modifier = Modifier.fillMaxSize(0.9f),
-                            contentScale = ContentScale.Fit
-                        )
-                    }
-                }
+                BloubAvatar(
+                    expression = stats.expression,
+                    visualStyle = stats.visualStyle,
+                    themeMode = stats.themeMode,
+                    modifier = Modifier.size(200.dp)
+                )
 
                 Spacer(modifier = Modifier.weight(1.2f))
 
