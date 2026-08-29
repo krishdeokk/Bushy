@@ -621,7 +621,7 @@ fun AddTaskDialog(onDismiss: () -> Unit, onAdd: (String, Int, com.bushy.health.T
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        shape = MaterialExpressiveShapes.cookie4,
+        shape = RoundedCornerShape(32.dp),
         title = { Text("New Mission", fontWeight = FontWeight.ExtraBold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -681,7 +681,7 @@ fun ShareMenuDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        shape = MaterialExpressiveShapes.cookie9,
+        shape = RoundedCornerShape(32.dp),
         title = { Text("Share Your Progress") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -1294,7 +1294,7 @@ fun AvatarSelectionDialog(onDismiss: () -> Unit, onSelect: (AvatarType) -> Unit)
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        shape = MaterialExpressiveShapes.softBurst,
+        shape = RoundedCornerShape(32.dp),
         title = { Text("Choose Your Hero", fontWeight = FontWeight.ExtraBold) },
         text = {
             Row(
