@@ -31,9 +31,13 @@ data class UserStats(
     val syncMessage: String? = null,
     val showChangelog: Boolean = false,
     val tasks: List<HealthTask> = emptyList(),
-    val bushyAIHistory: List<BushyAIMessage> = emptyList()
+    val bushyAIHistory: List<BushyAIMessage> = emptyList(),
+    val newlyAddedTaskId: String? = null,
+    val country: String = "India",
+    val bonusCalories: Int = 0,
+    val loggedMeals: List<LoggedMeal> = emptyList()
 ) {
-    val calories: Int get() = (steps * 0.04).toInt()
+    val calories: Int get() = (steps * 0.04).toInt() + bonusCalories
     
     val level: Int get() = (Math.sqrt(xp.toDouble() / 100.0).toInt() + 1)
     
@@ -58,6 +62,17 @@ data class HealthTask(
     val current: Int,
     val type: TaskType,
     val isCompleted: Boolean = false
+)
+
+data class LoggedMeal(
+    val id: String = java.util.UUID.randomUUID().toString(),
+    val name: String,
+    val calories: Int,
+    val proteinGrams: Int = 0,
+    val carbsGrams: Int = 0,
+    val fatGrams: Int = 0,
+    val country: String = "",
+    val timestamp: Long = System.currentTimeMillis()
 )
 
 data class BushyAIMessage(

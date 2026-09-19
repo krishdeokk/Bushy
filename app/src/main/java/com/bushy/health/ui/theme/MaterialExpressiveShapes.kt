@@ -14,6 +14,9 @@ object MaterialExpressiveShapes {
     /** 4-sided cookie shape (subtle amplitude to protect content) */
     val cookie4: Shape = createScallopedShape(lobes = 4, amplitude = 0.05f)
 
+    /** 7-sided cookie shape for shutter button */
+    val cookie7: Shape = createScallopedShape(lobes = 7, amplitude = 0.12f)
+
     /** 9-sided cookie shape */
     val cookie9: Shape = createScallopedShape(lobes = 9, amplitude = 0.04f)
 

@@ -1,5 +1,8 @@
 package com.bushy.health.ui
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.compose.animation.*
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -16,6 +19,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Collections
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -38,6 +43,8 @@ import coil.request.ImageRequest
 import com.bushy.health.*
 import com.bushy.health.ui.bloub.BloubAvatar
 import android.os.Build
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -47,6 +54,8 @@ fun BushyAIScreen(
     isActive: Boolean = false,
     onExpressionChange: (AvatarExpression) -> Unit,
     onAvatarClick: () -> Unit = {},
+    onDeployTask: ((String, Int, TaskType) -> Unit)? = null,
+    onMealLogged: ((String, Int) -> Unit)? = null,
     viewModel: BushyAIViewModel = viewModel()
 ) {
     val messages by viewModel.messages.collectAsState()
@@ -54,6 +63,27 @@ fun BushyAIScreen(
     val isUserTyping by viewModel.isUserTyping.collectAsState()
     
     val context = LocalContext.current
+    var showCustomCamera by remember { mutableStateOf(false) }
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            try {
+                val bitmap = if (Build.VERSION.SDK_INT >= 28) {
+                    android.graphics.ImageDecoder.decodeBitmap(android.graphics.ImageDecoder.createSource(context.contentResolver, uri))
+                } else {
+                    @Suppress("DEPRECATION")
+                    android.provider.MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
+                }
+                viewModel.analyzeMealPhoto(bitmap, userStats.country) { name, calories ->
+                    onMealLogged?.invoke(name, calories)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
     val currentExpression = when {
         isGenerating -> AvatarExpression.THINKING
         isUserTyping -> AvatarExpression.ATTENTIVE
@@ -213,6 +243,8 @@ fun BushyAIScreen(
                         )
                     }
 
+                    var showMediaMenu by remember { mutableStateOf(false) }
+
                     OutlinedTextField(
                         value = inputText,
                         onValueChange = {
@@ -221,6 +253,53 @@ fun BushyAIScreen(
                         },
                         placeholder = {
                             Text("Type a message...")
+                        },
+                        trailingIcon = {
+                            Box(
+                                modifier = Modifier.padding(end = 4.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                IconButton(
+                                    onClick = {
+                                        showMediaMenu = true
+                                    },
+                                    enabled = !isGenerating,
+                                    modifier = Modifier.size(44.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.PhotoCamera,
+                                        contentDescription = "Snap Meal Photo",
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(26.dp)
+                                    )
+                                }
+
+                                DropdownMenu(
+                                    expanded = showMediaMenu,
+                                    onDismissRequest = { showMediaMenu = false },
+                                    shape = RoundedCornerShape(20.dp),
+                                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text("Take Meal Photo", fontWeight = FontWeight.Bold) },
+                                        leadingIcon = { Icon(Icons.Default.PhotoCamera, null, tint = MaterialTheme.colorScheme.primary) },
+                                        onClick = {
+                                            showMediaMenu = false
+                                            showCustomCamera = true
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("Choose from Gallery", fontWeight = FontWeight.Bold) },
+                                        leadingIcon = { Icon(Icons.Default.Collections, null, tint = MaterialTheme.colorScheme.primary) },
+                                        onClick = {
+                                            showMediaMenu = false
+                                            photoPickerLauncher.launch(
+                                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                            )
+                                        }
+                                    )
+                                }
+                            }
                         },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(28.dp),
@@ -233,7 +312,7 @@ fun BushyAIScreen(
 
                     FilledIconButton(
                         onClick = {
-                            viewModel.sendMessage(inputText)
+                            viewModel.sendMessage(inputText, onDeployTask)
                             inputText = ""
                         },
                         modifier = Modifier.size(52.dp),
@@ -247,6 +326,26 @@ fun BushyAIScreen(
                     }
                 }
             }
+        }
+    }
+
+    if (showCustomCamera) {
+        Dialog(
+            onDismissRequest = { showCustomCamera = false },
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false,
+                decorFitsSystemWindows = false
+            )
+        ) {
+            BushyCameraScreen(
+                onDismiss = { showCustomCamera = false },
+                onPhotoCaptured = { bitmap ->
+                    showCustomCamera = false
+                    viewModel.analyzeMealPhoto(bitmap, userStats.country) { name, calories ->
+                        onMealLogged?.invoke(name, calories)
+                    }
+                }
+            )
         }
     }
 }

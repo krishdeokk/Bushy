@@ -173,6 +173,8 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
                     } else if (page == 1) {
                         TasksScreen(
                             tasks = uiState.tasks, 
+                            newlyAddedTaskId = uiState.newlyAddedTaskId,
+                            onClearNewlyAdded = { viewModel.clearNewlyAddedTask() },
                             onTaskHold = { viewModel.incrementTask(it) },
                             onTaskReset = { viewModel.resetTask(it) },
                             onAddTask = { showAddTaskDialog = true }
@@ -183,6 +185,22 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
                             userStats = uiState,
                             isActive = pagerState.currentPage == 2,
                             onExpressionChange = { viewModel.setExpressionDirectly(it) },
+                            onDeployTask = { title, target, type -> 
+                                viewModel.addNewTask(title, target, type)
+                                scope.launch {
+                                    delay(700)
+                                    pagerState.animateScrollToPage(
+                                        page = 1,
+                                        animationSpec = spring(
+                                            dampingRatio = Spring.DampingRatioLowBouncy,
+                                            stiffness = Spring.StiffnessLow
+                                        )
+                                    )
+                                }
+                            },
+                            onMealLogged = { name, calories ->
+                                viewModel.logMeal(name, calories)
+                            },
                             onAvatarClick = {
                                 keyboardController?.hide()
                                 focusManager.clearFocus()
@@ -805,7 +823,14 @@ fun HomeScreen(
 }
 
 @Composable
-fun TasksScreen(tasks: List<com.bushy.health.HealthTask>, onTaskHold: (String) -> Unit, onTaskReset: (String) -> Unit, onAddTask: () -> Unit) {
+fun TasksScreen(
+    tasks: List<com.bushy.health.HealthTask>, 
+    newlyAddedTaskId: String? = null,
+    onClearNewlyAdded: () -> Unit = {},
+    onTaskHold: (String) -> Unit, 
+    onTaskReset: (String) -> Unit, 
+    onAddTask: () -> Unit
+) {
     Box(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -824,7 +849,13 @@ fun TasksScreen(tasks: List<com.bushy.health.HealthTask>, onTaskHold: (String) -
             
             items(tasks.size) { index ->
                 val task = tasks[index]
-                TaskCard(task, onHold = { onTaskHold(task.id) }, onReset = { onTaskReset(task.id) })
+                TaskCard(
+                    task = task, 
+                    onHold = { onTaskHold(task.id) }, 
+                    onReset = { onTaskReset(task.id) },
+                    newlyAddedTaskId = newlyAddedTaskId,
+                    onClearNewlyAdded = onClearNewlyAdded
+                )
             }
         }
 
@@ -879,11 +910,21 @@ fun PillTabItem(
 }
 
 @Composable
-fun TaskCard(task: com.bushy.health.HealthTask, onHold: () -> Unit, onReset: () -> Unit) {
+fun TaskCard(
+    task: com.bushy.health.HealthTask, 
+    onHold: () -> Unit, 
+    onReset: () -> Unit,
+    newlyAddedTaskId: String? = null,
+    onClearNewlyAdded: () -> Unit = {}
+) {
+    val isNewlyAdded = task.id == newlyAddedTaskId
+
     val haptic = LocalHapticFeedback.current
-    val containerColor = if (task.isCompleted) 
-        MaterialTheme.colorScheme.primaryContainer 
-    else MaterialTheme.colorScheme.surfaceContainerHigh
+    val containerColor = when {
+        isNewlyAdded -> MaterialTheme.colorScheme.primaryContainer
+        task.isCompleted -> MaterialTheme.colorScheme.primaryContainer 
+        else -> MaterialTheme.colorScheme.surfaceContainerHigh
+    }
     
     val textBgColor = if (task.isCompleted)
         MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
@@ -899,13 +940,14 @@ fun TaskCard(task: com.bushy.health.HealthTask, onHold: () -> Unit, onReset: () 
     )
 
     val scale by animateFloatAsState(
-        targetValue = if (isPressing) 0.97f else 1f,
+        targetValue = if (isNewlyAdded) 1.06f else if (isPressing) 0.97f else 1f,
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
         label = "TaskCardScale"
     )
 
     val cornerRadius by animateDpAsState(
         targetValue = when {
+            isNewlyAdded -> 24.dp
             isPressing -> 18.dp
             task.isCompleted -> 32.dp
             else -> 36.dp
@@ -913,6 +955,13 @@ fun TaskCard(task: com.bushy.health.HealthTask, onHold: () -> Unit, onReset: () 
         animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow),
         label = "TaskCardCorner"
     )
+
+    LaunchedEffect(isNewlyAdded) {
+        if (isNewlyAdded) {
+            delay(1800)
+            onClearNewlyAdded()
+        }
+    }
 
     LaunchedEffect(isPressing) {
         if (isPressing && !task.isCompleted) {

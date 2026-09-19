@@ -39,7 +39,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             xp = prefs.getLong("xp", 0L),
             avatarType = AvatarType.valueOf(prefs.getString("avatar_type", AvatarType.MALE.name) ?: AvatarType.MALE.name),
             showChangelog = prefs.getInt("last_seen_version", 1) < 3,
-            tasks = emptyList() // Tasks could be persisted too, but keeping it simple for now
+            country = prefs.getString("country", "India") ?: "India",
+            bonusCalories = prefs.getInt("bonus_calories", 0),
+            tasks = emptyList()
         )
     }
 
@@ -58,6 +60,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             putString("visual_style", state.visualStyle.name)
             putLong("xp", state.xp)
             putString("avatar_type", state.avatarType.name)
+            putString("country", state.country)
+            putInt("bonus_calories", state.bonusCalories)
             apply()
         }
     }
@@ -204,17 +208,26 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun addNewTask(title: String, target: Int, type: TaskType) {
+        val newId = java.util.UUID.randomUUID().toString()
         _uiState.update { state ->
             val newTask = HealthTask(
-                id = java.util.UUID.randomUUID().toString(),
+                id = newId,
                 title = title,
                 target = target,
                 current = 0,
                 type = type
             )
-            state.copy(tasks = state.tasks + newTask, expression = AvatarExpression.EXCITED)
+            state.copy(
+                tasks = state.tasks + newTask, 
+                expression = AvatarExpression.EXCITED,
+                newlyAddedTaskId = newId
+            )
         }
-        setExpression(AvatarExpression.EXCITED, 2000)
+        setExpression(AvatarExpression.EXCITED, 2500)
+    }
+
+    fun clearNewlyAddedTask() {
+        _uiState.update { it.copy(newlyAddedTaskId = null) }
     }
 
     fun setAvatar(type: AvatarType) {
@@ -253,6 +266,35 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             it.copy(isSetupComplete = true, expression = AvatarExpression.CELEBRATING).also { state -> saveStats(state) } 
         }
         setExpression(AvatarExpression.CELEBRATING, 3000)
+    }
+
+    fun setCountry(country: String) {
+        _uiState.update { 
+            it.copy(country = country).also { state -> saveStats(state) } 
+        }
+    }
+
+    fun logMeal(name: String, calories: Int, protein: Int = 0, carbs: Int = 0, fat: Int = 0) {
+        _uiState.update { state ->
+            val newMeal = LoggedMeal(
+                name = name,
+                calories = calories,
+                proteinGrams = protein,
+                carbsGrams = carbs,
+                fatGrams = fat,
+                country = state.country
+            )
+            val updatedBonus = state.bonusCalories + calories
+            val updatedXP = state.xp + 50
+            
+            state.copy(
+                bonusCalories = updatedBonus,
+                xp = updatedXP,
+                loggedMeals = state.loggedMeals + newMeal,
+                expression = AvatarExpression.HAPPY
+            ).also { saveStats(it) }
+        }
+        setExpression(AvatarExpression.HAPPY, 3000)
     }
 
     fun onScreenTouch() {

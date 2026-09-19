@@ -3,6 +3,7 @@ package com.bushy.health.ui
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
@@ -46,7 +47,7 @@ fun SetupScreen(
     viewModel: GameViewModel,
     onRequestPermissions: () -> Unit
 ) {
-    val pagerState = rememberPagerState { 6 }
+    val pagerState = rememberPagerState { 7 }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     
@@ -68,6 +69,7 @@ fun SetupScreen(
     var selectedGender by remember { mutableStateOf(AvatarType.MALE) }
     var selectedVisualStyle by remember { mutableStateOf(VisualStyle.MATERIAL3) }
     var selectedThemeMode by remember { mutableStateOf(ThemeMode.SYSTEM) }
+    var selectedCountry by remember { mutableStateOf("India") }
 
     Box(
         modifier = Modifier
@@ -107,6 +109,10 @@ fun SetupScreen(
                     }
                     4 -> NameStep(name) { name = it }
                     5 -> StatsStep(age, height, { age = it }, { height = it })
+                    6 -> CountryStep(selectedCountry) {
+                        selectedCountry = it
+                        viewModel.setCountry(it)
+                    }
                 }
             }
 
@@ -139,7 +145,7 @@ fun SetupScreen(
                 Button(
                     onClick = {
                         scope.launch {
-                            if (pagerState.currentPage < 5) {
+                            if (pagerState.currentPage < 6) {
                                 if (pagerState.currentPage == 2 && selectedVisualStyle == VisualStyle.MONOCHROME) {
                                     pagerState.animateScrollToPage(4)
                                 } else {
@@ -147,6 +153,7 @@ fun SetupScreen(
                                 }
                             } else {
                                 viewModel.updateProfile(name, age.toIntOrNull() ?: 0, height.toIntOrNull() ?: 0)
+                                viewModel.setCountry(selectedCountry.ifBlank { "India" })
                                 viewModel.completeSetup()
                             }
                         }
@@ -158,16 +165,17 @@ fun SetupScreen(
                     enabled = when(pagerState.currentPage) {
                         4 -> name.isNotBlank()
                         5 -> age.isNotBlank() && height.isNotBlank()
+                        6 -> selectedCountry.isNotBlank()
                         else -> true
                     }
                 ) {
                     Text(
-                        if (pagerState.currentPage == 5) "Begin Adventure" else "Continue",
+                        if (pagerState.currentPage == 6) "Begin Adventure" else "Continue",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Icon(if (pagerState.currentPage == 5) Icons.Default.Check else Icons.AutoMirrored.Filled.ArrowForward, null)
+                    Icon(if (pagerState.currentPage == 6) Icons.Default.Check else Icons.AutoMirrored.Filled.ArrowForward, null)
                 }
             }
         }
@@ -583,5 +591,72 @@ fun StatsStep(age: String, height: String, onAgeChange: (String) -> Unit, onHeig
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+    }
+}
+
+@Composable
+fun CountryStep(
+    selectedCountry: String,
+    onCountrySelect: (String) -> Unit
+) {
+    val presets = listOf("India", "USA", "Mexico", "Japan", "Italy", "Germany", "UK", "Brazil", "Canada", "Spain", "France", "Nigeria")
+    var customInput by remember { mutableStateOf(selectedCountry) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            "Where are you from?",
+            style = MaterialTheme.typography.displaySmall,
+            fontWeight = FontWeight.Black,
+            textAlign = TextAlign.Center
+        )
+        
+        Spacer(modifier = Modifier.height(12.dp))
+        
+        Text(
+            "Bushy Wushy AI uses your country to identify local dishes & ingredients in your meal photos!",
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        
+        Spacer(modifier = Modifier.height(28.dp))
+
+        OutlinedTextField(
+            value = customInput,
+            onValueChange = { 
+                customInput = it
+                onCountrySelect(it)
+            },
+            label = { Text("Country Name") },
+            shape = RoundedCornerShape(20.dp),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text("Quick Presets:", style = MaterialTheme.typography.labelMedium)
+        
+        Spacer(modifier = Modifier.height(8.dp))
+
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            items(presets.size) { index ->
+                val country = presets[index]
+                FilterChip(
+                    selected = selectedCountry.equals(country, ignoreCase = true),
+                    onClick = {
+                        customInput = country
+                        onCountrySelect(country)
+                    },
+                    label = { Text(country) },
+                    shape = RoundedCornerShape(16.dp)
+                )
+            }
+        }
     }
 }
