@@ -1,5 +1,6 @@
 package com.bushy.health
 
+import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.ai.client.generativeai.GenerativeModel
@@ -40,7 +41,7 @@ class BushyAIViewModel : ViewModel() {
         _isUserTyping.value = isTyping
     }
 
-    fun sendMessage(userText: String) {
+    fun sendMessage(userText: String, onDeployTask: ((String, Int, TaskType) -> Unit)? = null) {
         if (userText.isBlank()) return
 
         val userMessage = BushyAIMessage(text = userText, isUser = true)
@@ -61,6 +62,33 @@ class BushyAIViewModel : ViewModel() {
                 _messages.update { it + aiMessage }
             } catch (e: Exception) {
                 _messages.update { it + BushyAIMessage(text = "Error: ${e.localizedMessage}", isUser = false) }
+            } finally {
+                _isGenerating.value = false
+            }
+        }
+    }
+
+    fun analyzeMealPhoto(bitmap: Bitmap, country: String, onResult: (String, Int) -> Unit) {
+        _isGenerating.value = true
+        viewModelScope.launch {
+            try {
+                val prompt = "Analyze this meal photo from $country. Reply with the meal name and estimated calories in exactly this format: Name, Calories (just the number). Example: Burger, 500"
+                val response = generativeModel.generateContent(content {
+                    image(bitmap)
+                    text(prompt)
+                })
+                
+                val textResponse = response.text ?: ""
+                val parts = textResponse.split(",")
+                if (parts.size >= 2) {
+                    val name = parts[0].trim()
+                    val calories = parts[1].trim().filter { it.isDigit() }.toIntOrNull() ?: 0
+                    onResult(name, calories)
+                } else {
+                    onResult("Unknown Meal", 0)
+                }
+            } catch (e: Exception) {
+                onResult("Error analyzing photo", 0)
             } finally {
                 _isGenerating.value = false
             }

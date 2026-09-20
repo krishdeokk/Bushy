@@ -1,5 +1,5 @@
 [versions]
-agp = "9.3.2"
+agp = "9.4.1"
 coreKtx = "1.19.0"
 junit = "4.13.2"
 junitVersion = "1.3.0"
@@ -8,7 +8,7 @@ lifecycleRuntimeKtx = "2.11.0"
 lifecycleViewmodelCompose = "2.11.0"
 activityCompose = "1.13.0"
 kotlin = "2.2.10"
-composeBom = "2026.02.01"
+composeBom = "2026.09.00"
 firebaseBom = "33.1.2"
 googleGmsGoogleServices = "4.4.2"
 healthConnect = "1.1.0"
@@ -17,9 +17,11 @@ material = "1.14.0"
 capturable = "3.0.1"
 coil = "2.7.0"
 generativeai = "0.9.0"
-camerax = "1.3.4"
+camerax = "1.6.2"
+graphicsPath = "1.1.0"
 
 [libraries]
+androidx-graphics-path = { group = "androidx.graphics", name = "graphics-path", version.ref = "graphicsPath" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
