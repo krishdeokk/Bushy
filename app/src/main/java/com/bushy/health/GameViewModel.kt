@@ -100,7 +100,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     xp = state.xp + (if (finalSteps > state.steps) (finalSteps - state.steps) / 10 else 0),
                     tasks = updatedTasks,
                     expression = expression,
-                    syncMessage = if (syncedSteps > 0) null else "Google Health has 0 steps. Tip: Open Google Fit Settings and tap 'Sync now'."
+                    syncMessage = null
                 ).also { saveStats(it) }
             }
             
