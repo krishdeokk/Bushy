@@ -16,9 +16,9 @@ materialIconsExtended = "1.7.8"
 material = "1.14.0"
 capturable = "3.0.1"
 coil = "2.7.0"
-generativeai = "0.9.0"
 camerax = "1.6.2"
 graphicsPath = "1.1.0"
+onnxruntime = "1.20.0"
 
 [libraries]
 androidx-graphics-path = { group = "androidx.graphics", name = "graphics-path", version.ref = "graphicsPath" }
@@ -43,11 +43,11 @@ material = { group = "com.google.android.material", name = "material", version.r
 capturable = { group = "dev.shreyaspatil", name = "capturable", version.ref = "capturable" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 coil-gif = { group = "io.coil-kt", name = "coil-gif", version.ref = "coil" }
-google-generativeai = { group = "com.google.ai.client.generativeai", name = "generativeai", version.ref = "generativeai" }
 androidx-camera-core = { group = "androidx.camera", name = "camera-core", version.ref = "camerax" }
 androidx-camera-camera2 = { group = "androidx.camera", name = "camera-camera2", version.ref = "camerax" }
 androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "camerax" }
 androidx-camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "camerax" }
+onnxruntime-android = { group = "com.microsoft.onnxruntime", name = "onnxruntime-android", version.ref = "onnxruntime" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
