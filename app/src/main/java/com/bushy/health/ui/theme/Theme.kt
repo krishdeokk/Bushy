@@ -163,12 +163,21 @@ private val MonoDarkColorScheme = darkColorScheme(
     inversePrimary = MonoBlack
 )
 
+private fun android.content.Context.findActivity(): Activity? {
+    var currentContext = this
+    while (currentContext is android.content.ContextWrapper) {
+        if (currentContext is Activity) return currentContext
+        currentContext = currentContext.baseContext
+    }
+    return null
+}
+
 @Composable
 fun BushyTheme(
     avatarType: AvatarType = AvatarType.MALE,
     themeMode: ThemeMode = ThemeMode.SYSTEM,
     visualStyle: VisualStyle = VisualStyle.MATERIAL3,
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val darkTheme = when (themeMode) {
@@ -193,7 +202,7 @@ fun BushyTheme(
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
-            val window = (view.context as Activity).window
+            val window = view.context.findActivity()?.window ?: return@SideEffect
             window.statusBarColor = Color.Transparent.toArgb()
             window.navigationBarColor = Color.Transparent.toArgb()
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme

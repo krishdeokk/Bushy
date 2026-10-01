@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 
 class GameViewModel(application: Application) : AndroidViewModel(application) {
@@ -28,7 +29,75 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         refreshStats()
     }
 
+    private fun getStarterTasks(): List<HealthTask> {
+        return listOf(
+            HealthTask(
+                id = "starter_steps",
+                title = "Daily Walk",
+                target = 5000,
+                current = 0,
+                type = TaskType.STEPS
+            ),
+            HealthTask(
+                id = "starter_pushups",
+                title = "Power Pushups",
+                target = 20,
+                current = 0,
+                type = TaskType.PUSHUPS
+            ),
+            HealthTask(
+                id = "starter_water",
+                title = "Hydrate Hero",
+                target = 8,
+                current = 0,
+                type = TaskType.WATER
+            )
+        )
+    }
+
+    private fun calculateUpdatedStreak(lastDate: String, currentStreak: Int): Pair<Int, String> {
+        val today = try {
+            java.time.LocalDate.now().toString()
+        } catch (e: Exception) {
+            ""
+        }
+        if (today.isEmpty()) return Pair(currentStreak.coerceAtLeast(1), lastDate)
+        if (lastDate.isEmpty()) {
+            return Pair(1, today)
+        }
+        if (lastDate == today) {
+            return Pair(currentStreak.coerceAtLeast(1), today)
+        }
+        return try {
+            val lastLocalDate = java.time.LocalDate.parse(lastDate)
+            val todayLocalDate = java.time.LocalDate.now()
+            val daysDiff = java.time.temporal.ChronoUnit.DAYS.between(lastLocalDate, todayLocalDate)
+            when (daysDiff) {
+                1L -> Pair(currentStreak + 1, today)
+                0L -> Pair(currentStreak.coerceAtLeast(1), today)
+                else -> Pair(1, today)
+            }
+        } catch (e: Exception) {
+            Pair(1, today)
+        }
+    }
+
     private fun loadStats(): UserStats {
+        val savedTasksStr = prefs.getString("saved_tasks", null)
+        val loadedTasks = if (savedTasksStr != null) {
+            parseTasksJson(savedTasksStr)
+        } else {
+            getStarterTasks()
+        }
+        val finalTasks = if (loadedTasks.isEmpty()) getStarterTasks() else loadedTasks
+
+        val savedMealsStr = prefs.getString("saved_meals", null)
+        val meals = parseMealsJson(savedMealsStr)
+
+        val rawStreak = prefs.getInt("streak_days", 1)
+        val lastDate = prefs.getString("last_active_date", "") ?: ""
+        val (streak, updatedDate) = calculateUpdatedStreak(lastDate, rawStreak)
+
         return UserStats(
             userName = prefs.getString("user_name", "") ?: "",
             age = prefs.getInt("age", 0),
@@ -36,12 +105,17 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             isSetupComplete = prefs.getBoolean("is_setup_complete", false),
             themeMode = ThemeMode.valueOf(prefs.getString("theme_mode", ThemeMode.SYSTEM.name) ?: ThemeMode.SYSTEM.name),
             visualStyle = VisualStyle.valueOf(prefs.getString("visual_style", VisualStyle.MATERIAL3.name) ?: VisualStyle.MATERIAL3.name),
+            steps = prefs.getLong("steps", 0L),
+            pushups = prefs.getInt("pushups", 0),
             xp = prefs.getLong("xp", 0L),
             avatarType = AvatarType.valueOf(prefs.getString("avatar_type", AvatarType.MALE.name) ?: AvatarType.MALE.name),
             showChangelog = prefs.getInt("last_seen_version", 1) < 3,
             country = prefs.getString("country", "India") ?: "India",
             bonusCalories = prefs.getInt("bonus_calories", 0),
-            tasks = emptyList()
+            tasks = finalTasks,
+            loggedMeals = meals,
+            streakDays = streak,
+            lastActiveDate = updatedDate
         )
     }
 
@@ -58,10 +132,16 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             putBoolean("is_setup_complete", state.isSetupComplete)
             putString("theme_mode", state.themeMode.name)
             putString("visual_style", state.visualStyle.name)
+            putLong("steps", state.steps)
+            putInt("pushups", state.pushups)
             putLong("xp", state.xp)
             putString("avatar_type", state.avatarType.name)
             putString("country", state.country)
             putInt("bonus_calories", state.bonusCalories)
+            putInt("streak_days", state.streakDays)
+            putString("last_active_date", state.lastActiveDate)
+            putString("saved_tasks", state.tasks.tasksToJsonString())
+            putString("saved_meals", state.loggedMeals.mealsToJsonString())
             apply()
         }
     }
@@ -125,12 +205,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun incrementTask(taskId: String) {
-        _uiState.update { state ->
-            val taskToIncrement = state.tasks.find { it.id == taskId } ?: return@update state
-            if (taskToIncrement.isCompleted) return@update state
+        val updatedState = _uiState.updateAndGet { state ->
+            val taskToIncrement = state.tasks.find { it.id == taskId } ?: return@updateAndGet state
+            if (taskToIncrement.isCompleted) return@updateAndGet state
 
             val isStepTask = taskToIncrement.type == TaskType.STEPS
-            val isManualTask = taskToIncrement.type == TaskType.PUSHUPS
+            val isPushupTask = taskToIncrement.type == TaskType.PUSHUPS
             val incrementAmount = if (isStepTask) 100 else 1
 
             val newCurrent = (taskToIncrement.current + incrementAmount).coerceAtMost(taskToIncrement.target)
@@ -142,9 +222,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 } else task
             }
 
-            // XP Rewards: 10 per manual, 1 per 10 steps, 500 for mission complete
-            val earnedXp = (if (isManualTask) 10 else if (isStepTask) 10 else 0) + 
-                          (if (newlyCompleted) 500 else 0)
+            // XP Rewards: 10 per action/100 steps, 500 for mission complete
+            val earnedXp = 10 + (if (newlyCompleted) 500 else 0)
 
             val oldLevel = state.level
             var expression = if (newlyCompleted) AvatarExpression.CELEBRATING else AvatarExpression.WORKING_OUT
@@ -159,22 +238,22 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             state.copy(
                 tasks = updatedTasks,
                 xp = xpAdded,
-                pushups = if (isManualTask) state.pushups + incrementAmount else state.pushups,
+                pushups = if (isPushupTask) state.pushups + incrementAmount else state.pushups,
                 steps = if (isStepTask) state.steps + incrementAmount else state.steps,
                 expression = expression
-            ).also { saveStats(it) }
+            )
         }
+        saveStats(updatedState)
         
         // Use setExpression to revert to IDLE after a delay
-        val currentState = _uiState.value
-        if (currentState.expression != AvatarExpression.NEUTRAL) {
-            setExpression(currentState.expression, if (currentState.expression == AvatarExpression.CELEBRATING) 4000 else 1000)
+        if (updatedState.expression != AvatarExpression.NEUTRAL) {
+            setExpression(updatedState.expression, if (updatedState.expression == AvatarExpression.CELEBRATING) 4000 else 1000)
         }
     }
 
     fun resetTask(taskId: String) {
-        _uiState.update { state ->
-            val taskToReset = state.tasks.find { it.id == taskId } ?: return@update state
+        val updatedState = _uiState.updateAndGet { state ->
+            val taskToReset = state.tasks.find { it.id == taskId } ?: return@updateAndGet state
             val updatedTasks = state.tasks.map { task ->
                 if (task.id == taskId) {
                     task.copy(current = 0, isCompleted = false)
@@ -182,16 +261,40 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             }
             
             val isStepTask = taskToReset.type == TaskType.STEPS
-            val isManualTask = taskToReset.type == TaskType.PUSHUPS
+            val isPushupTask = taskToReset.type == TaskType.PUSHUPS
             
             state.copy(
                 tasks = updatedTasks,
                 steps = if (isStepTask) (state.steps - taskToReset.current).coerceAtLeast(0) else state.steps,
-                pushups = if (isManualTask) (state.pushups - taskToReset.current).coerceAtLeast(0) else state.pushups,
+                pushups = if (isPushupTask) (state.pushups - taskToReset.current).coerceAtLeast(0) else state.pushups,
                 expression = AvatarExpression.TIRED
+            )
+        }
+        saveStats(updatedState)
+        setExpression(AvatarExpression.TIRED, 2000)
+    }
+
+    fun singleTapIncrement(taskId: String) {
+        incrementTask(taskId)
+    }
+
+    fun deleteTask(taskId: String) {
+        _uiState.update { state ->
+            val updatedTasks = state.tasks.filter { it.id != taskId }
+            state.copy(tasks = updatedTasks).also { saveStats(it) }
+        }
+    }
+
+    fun deleteMeal(mealId: String) {
+        _uiState.update { state ->
+            val mealToDelete = state.loggedMeals.find { it.id == mealId } ?: return@update state
+            val updatedMeals = state.loggedMeals.filter { it.id != mealId }
+            val newBonus = (state.bonusCalories - mealToDelete.calories).coerceAtLeast(0)
+            state.copy(
+                loggedMeals = updatedMeals,
+                bonusCalories = newBonus
             ).also { saveStats(it) }
         }
-        setExpression(AvatarExpression.TIRED, 2000)
     }
 
     fun resetAllStats() {
@@ -200,7 +303,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 steps = 0,
                 pushups = 0,
                 xp = 0,
-                tasks = emptyList(),
+                bonusCalories = 0,
+                tasks = getStarterTasks(),
+                loggedMeals = emptyList(),
                 expression = AvatarExpression.TIRED
             ).also { saveStats(it) }
         }
@@ -221,7 +326,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 tasks = state.tasks + newTask, 
                 expression = AvatarExpression.EXCITED,
                 newlyAddedTaskId = newId
-            )
+            ).also { saveStats(it) }
         }
         setExpression(AvatarExpression.EXCITED, 2500)
     }
@@ -262,8 +367,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun completeSetup() {
-        _uiState.update { 
-            it.copy(isSetupComplete = true, expression = AvatarExpression.CELEBRATING).also { state -> saveStats(state) } 
+        _uiState.update { state ->
+            val tasks = if (state.tasks.isEmpty()) getStarterTasks() else state.tasks
+            state.copy(
+                isSetupComplete = true,
+                tasks = tasks,
+                expression = AvatarExpression.CELEBRATING
+            ).also { saveStats(state) } 
         }
         setExpression(AvatarExpression.CELEBRATING, 3000)
     }

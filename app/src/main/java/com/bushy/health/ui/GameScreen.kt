@@ -209,7 +209,9 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
                             newlyAddedTaskId = uiState.newlyAddedTaskId,
                             onClearNewlyAdded = { viewModel.clearNewlyAddedTask() },
                             onTaskHold = { viewModel.incrementTask(it) },
+                            onTaskTap = { viewModel.singleTapIncrement(it) },
                             onTaskReset = { viewModel.resetTask(it) },
+                            onTaskDelete = { viewModel.deleteTask(it) },
                             onAddTask = { showAddTaskDialog = true }
                         )
                     } else {
@@ -231,8 +233,8 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
                                     )
                                 }
                             },
-                            onMealLogged = { name, calories ->
-                                viewModel.logMeal(name, calories)
+                            onMealLogged = { name, calories, protein, carbs, fat ->
+                                viewModel.logMeal(name, calories, protein, carbs, fat)
                             },
                             onAvatarClick = {
                                 keyboardController?.hide()
@@ -606,27 +608,27 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
         }
     }
 
-    Box(
-        modifier = Modifier
-            .size(1.dp)
-            .graphicsLayer {
-                this.translationX = 20000f // Move way off-screen
-            }
-            .drawWithCache {
-                onDrawWithContent {
-                    if (isSharingStory) {
+    if (isSharingStory) {
+        Box(
+            modifier = Modifier
+                .size(1.dp)
+                .graphicsLayer {
+                    this.translationX = 20000f // Move way off-screen
+                }
+                .drawWithCache {
+                    onDrawWithContent {
                         storyGraphicsLayer.record(androidx.compose.ui.unit.IntSize(1080, 1920)) {
                             this@onDrawWithContent.drawContent()
                         }
                     }
                 }
-            }
-    ) {
-        CompositionLocalProvider(
-            androidx.compose.ui.platform.LocalDensity provides androidx.compose.ui.unit.Density(3f)
         ) {
-            Box(modifier = Modifier.size(width = 360.dp, height = 640.dp)) { 
-                StoryShareCard(stats = uiState)
+            CompositionLocalProvider(
+                androidx.compose.ui.platform.LocalDensity provides androidx.compose.ui.unit.Density(3f)
+            ) {
+                Box(modifier = Modifier.size(width = 360.dp, height = 640.dp)) { 
+                    StoryShareCard(stats = uiState)
+                }
             }
         }
     }
@@ -710,10 +712,12 @@ fun AddTaskDialog(onDismiss: () -> Unit, onAdd: (String, Int, com.bushy.health.T
 
     val presets = listOf(
         Triple("Pushups (Chest)", 20, com.bushy.health.TaskType.PUSHUPS),
-        Triple("Squats (Legs)", 15, com.bushy.health.TaskType.PUSHUPS),
-        Triple("Bicep Curls (Arms)", 12, com.bushy.health.TaskType.PUSHUPS),
-        Triple("Pullups (Back)", 10, com.bushy.health.TaskType.PUSHUPS),
-        Triple("Crunches (Abs)", 25, com.bushy.health.TaskType.PUSHUPS)
+        Triple("Daily Walk", 5000, com.bushy.health.TaskType.STEPS),
+        Triple("Hydration (Water)", 8, com.bushy.health.TaskType.WATER),
+        Triple("Squats (Legs)", 20, com.bushy.health.TaskType.GENERAL),
+        Triple("Plank Hold (Sec)", 60, com.bushy.health.TaskType.GENERAL),
+        Triple("Pullups (Back)", 10, com.bushy.health.TaskType.GENERAL),
+        Triple("Crunches (Abs)", 25, com.bushy.health.TaskType.GENERAL)
     )
 
     AlertDialog(
@@ -722,6 +726,18 @@ fun AddTaskDialog(onDismiss: () -> Unit, onAdd: (String, Int, com.bushy.health.T
         title = { Text("New Mission", fontWeight = FontWeight.ExtraBold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Text("Mission Type:", style = MaterialTheme.typography.labelMedium)
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(com.bushy.health.TaskType.entries.size) { index ->
+                        val taskType = com.bushy.health.TaskType.entries[index]
+                        FilterChip(
+                            selected = type == taskType,
+                            onClick = { type = taskType },
+                            label = { Text(taskType.name) }
+                        )
+                    }
+                }
+
                 Text("Quick Presets:", style = MaterialTheme.typography.labelMedium)
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(presets.size) { index ->
@@ -843,6 +859,26 @@ fun LevelHeader(stats: UserStats) {
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Surface(
+                color = MaterialTheme.colorScheme.tertiaryContainer,
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.height(32.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "🔥 ${stats.streakDays}d",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Black,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
+                }
+            }
         }
         
         Spacer(modifier = Modifier.height(12.dp))
@@ -870,7 +906,7 @@ fun HomeScreen(
         modifier = Modifier.fillMaxSize().statusBarsPadding(),
         contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 200.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(32.dp)
+        verticalArrangement = Arrangement.spacedBy(28.dp)
     ) {
         item {
             AvatarSection(
@@ -898,6 +934,15 @@ fun HomeScreen(
         item {
             StatsGrid(uiState)
         }
+
+        if (uiState.loggedMeals.isNotEmpty()) {
+            item {
+                MealsSection(
+                    meals = uiState.loggedMeals,
+                    onDeleteMeal = { viewModel.deleteMeal(it) }
+                )
+            }
+        }
     }
 }
 
@@ -907,9 +952,21 @@ fun TasksScreen(
     newlyAddedTaskId: String? = null,
     onClearNewlyAdded: () -> Unit = {},
     onTaskHold: (String) -> Unit, 
+    onTaskTap: (String) -> Unit,
     onTaskReset: (String) -> Unit, 
+    onTaskDelete: (String) -> Unit,
     onAddTask: () -> Unit
 ) {
+    var selectedFilter by remember { mutableIntStateOf(0) } // 0: All, 1: Active, 2: Done
+
+    val filteredTasks = remember(tasks, selectedFilter) {
+        when (selectedFilter) {
+            1 -> tasks.filter { !it.isCompleted }
+            2 -> tasks.filter { it.isCompleted }
+            else -> tasks
+        }
+    }
+
     Box(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -917,21 +974,45 @@ fun TasksScreen(
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             item {
-                Text(
-                    "Daily Missions",
-                    style = MaterialTheme.typography.displaySmall,
-                    fontWeight = FontWeight.Black,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.height(8.dp))
+                Column {
+                    Text(
+                        "Daily Missions",
+                        style = MaterialTheme.typography.displaySmall,
+                        fontWeight = FontWeight.Black,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FilterChip(
+                            selected = selectedFilter == 0,
+                            onClick = { selectedFilter = 0 },
+                            label = { Text("All (${tasks.size})") }
+                        )
+                        FilterChip(
+                            selected = selectedFilter == 1,
+                            onClick = { selectedFilter = 1 },
+                            label = { Text("Active (${tasks.count { !it.isCompleted }})") }
+                        )
+                        FilterChip(
+                            selected = selectedFilter == 2,
+                            onClick = { selectedFilter = 2 },
+                            label = { Text("Done (${tasks.count { it.isCompleted }})") }
+                        )
+                    }
+                }
             }
             
-            items(tasks.size) { index ->
-                val task = tasks[index]
+            items(
+                count = filteredTasks.size,
+                key = { filteredTasks[it].id }
+            ) { index ->
+                val task = filteredTasks[index]
                 TaskCard(
                     task = task, 
                     onHold = { onTaskHold(task.id) }, 
+                    onTap = { onTaskTap(task.id) },
                     onReset = { onTaskReset(task.id) },
+                    onDelete = { onTaskDelete(task.id) },
                     newlyAddedTaskId = newlyAddedTaskId,
                     onClearNewlyAdded = onClearNewlyAdded
                 )
@@ -1027,7 +1108,9 @@ fun PillTabItem(
 fun TaskCard(
     task: com.bushy.health.HealthTask, 
     onHold: () -> Unit, 
+    onTap: () -> Unit = {},
     onReset: () -> Unit,
+    onDelete: () -> Unit = {},
     newlyAddedTaskId: String? = null,
     onClearNewlyAdded: () -> Unit = {}
 ) {
@@ -1046,6 +1129,7 @@ fun TaskCard(
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
 
     var isPressing by remember { mutableStateOf(false) }
+    var holdTriggered by remember { mutableStateOf(false) }
     
     val animatedProgress by animateFloatAsState(
         targetValue = task.current.toFloat() / task.target.toFloat(),
@@ -1079,10 +1163,12 @@ fun TaskCard(
 
     LaunchedEffect(isPressing) {
         if (isPressing && !task.isCompleted) {
+            delay(250)
             while (isPressing && !task.isCompleted) {
+                holdTriggered = true
                 onHold()
                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                delay(100)
+                delay(120)
             }
         }
     }
@@ -1114,8 +1200,15 @@ fun TaskCard(
                 .pointerInput(task.id, task.isCompleted) {
                     if (!task.isCompleted) {
                         detectTapGestures(
+                            onTap = {
+                                if (!holdTriggered) {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    onTap()
+                                }
+                            },
                             onPress = {
                                 isPressing = true
+                                holdTriggered = false
                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                 try {
                                     awaitRelease()
@@ -1176,6 +1269,22 @@ fun TaskCard(
                         )
                     ) {
                         Icon(Icons.Default.Refresh, contentDescription = "Reset", modifier = Modifier.size(16.dp))
+                    }
+
+                    Spacer(modifier = Modifier.width(6.dp))
+
+                    FilledTonalIconButton(
+                        onClick = { 
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onDelete() 
+                        },
+                        modifier = Modifier.size(32.dp),
+                        shape = CircleShape,
+                        colors = IconButtonDefaults.filledTonalIconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                        )
+                    ) {
+                        Icon(Icons.Default.Delete, contentDescription = "Delete", modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.error)
                     }
                 }
                 
@@ -1309,12 +1418,36 @@ fun StatsGrid(stats: UserStats) {
                 shape = RoundedCornerShape(16.dp, 36.dp, 28.dp, 28.dp)
             )
         }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            StatCard(
+                modifier = Modifier.weight(1f),
+                icon = Icons.Default.FitnessCenter,
+                value = "${stats.pushups}",
+                label = "Pushups",
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                shape = RoundedCornerShape(28.dp, 16.dp, 28.dp, 28.dp)
+            )
+            val completedMissions = stats.tasks.count { it.isCompleted }
+            StatCard(
+                modifier = Modifier.weight(1f),
+                icon = Icons.Default.CheckCircle,
+                value = "$completedMissions / ${stats.tasks.size}",
+                label = "Missions",
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                shape = RoundedCornerShape(16.dp, 28.dp, 28.dp, 28.dp)
+            )
+        }
+
         StatCard(
             modifier = Modifier.fillMaxWidth(),
             icon = Icons.Default.Star,
             value = "${stats.xp}",
             label = "Total XP Earned",
-            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
             shape = RoundedCornerShape(28.dp, 28.dp, 16.dp, 36.dp)
         )
         
@@ -1338,6 +1471,122 @@ fun StatsGrid(stats: UserStats) {
                 containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 shape = RoundedCornerShape(28.dp, 28.dp, 36.dp, 16.dp)
             )
+        }
+    }
+}
+
+@Composable
+fun MealsSection(
+    meals: List<LoggedMeal>,
+    onDeleteMeal: (String) -> Unit
+) {
+    val totalCalories = meals.sumOf { it.calories }
+    val totalProtein = meals.sumOf { it.proteinGrams }
+    val totalCarbs = meals.sumOf { it.carbsGrams }
+    val totalFat = meals.sumOf { it.fatGrams }
+
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Surface(
+                    modifier = Modifier.size(40.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.secondaryContainer
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            Icons.Default.Restaurant,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        "Today's Nutrition",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        "$totalCalories kcal logged (${meals.size} ${if (meals.size == 1) "meal" else "meals"})",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                MacroPill(label = "Protein", value = "${totalProtein}g", color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.weight(1f))
+                MacroPill(label = "Carbs", value = "${totalCarbs}g", color = MaterialTheme.colorScheme.secondaryContainer, modifier = Modifier.weight(1f))
+                MacroPill(label = "Fat", value = "${totalFat}g", color = MaterialTheme.colorScheme.tertiaryContainer, modifier = Modifier.weight(1f))
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                meals.takeLast(3).reversed().forEach { meal ->
+                    Surface(
+                        color = MaterialTheme.colorScheme.surface,
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(meal.name, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
+                                if (meal.proteinGrams > 0 || meal.carbsGrams > 0 || meal.fatGrams > 0) {
+                                    Text(
+                                        "${meal.calories} kcal • ${meal.proteinGrams}g P • ${meal.carbsGrams}g C • ${meal.fatGrams}g F",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                } else {
+                                    Text("${meal.calories} kcal", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                            }
+                            IconButton(
+                                onClick = { onDeleteMeal(meal.id) },
+                                modifier = Modifier.size(28.dp)
+                            ) {
+                                Icon(Icons.Default.Close, contentDescription = "Delete Meal", modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.error)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun MacroPill(label: String, value: String, color: Color, modifier: Modifier = Modifier) {
+    Surface(
+        color = color,
+        shape = RoundedCornerShape(14.dp),
+        modifier = modifier
+    ) {
+        Column(
+            modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(value, fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.labelLarge, color = contentColorFor(color))
+            Text(label, style = MaterialTheme.typography.labelSmall, color = contentColorFor(color).copy(alpha = 0.7f))
         }
     }
 }

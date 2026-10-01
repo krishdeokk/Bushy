@@ -23,7 +23,7 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Collections
 import androidx.compose.material.icons.filled.PhotoCamera
-import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -58,7 +58,7 @@ fun BushyAIScreen(
     onExpressionChange: (AvatarExpression) -> Unit,
     onAvatarClick: () -> Unit = {},
     onDeployTask: ((String, Int, TaskType) -> Unit)? = null,
-    onMealLogged: ((String, Int) -> Unit)? = null,
+    onMealLogged: ((String, Int, Int, Int, Int) -> Unit)? = null,
     viewModel: BushyAIViewModel = viewModel()
 ) {
     val messages by viewModel.messages.collectAsState()
@@ -82,8 +82,8 @@ fun BushyAIScreen(
                     @Suppress("DEPRECATION")
                     android.provider.MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
                 }
-                viewModel.analyzeMealPhoto(bitmap, userStats.country) { name, calories ->
-                    onMealLogged?.invoke(name, calories)
+                viewModel.analyzeMealPhoto(bitmap, userStats.country) { name, calories, protein, carbs, fat ->
+                    onMealLogged?.invoke(name, calories, protein, carbs, fat)
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -155,7 +155,10 @@ fun BushyAIScreen(
                         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 100.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        items(messages) { message ->
+                        items(
+                            items = messages,
+                            key = { "${it.timestamp}_${it.isUser}_${it.text.hashCode()}" }
+                        ) { message ->
                             ChatBubble(message)
                         }
                         
@@ -218,15 +221,30 @@ fun BushyAIScreen(
                     }
                 }
 
-                IconButton(
-                    onClick = { showModelSettingsSheet = true },
-                    modifier = Modifier.align(Alignment.CenterEnd)
+                Row(
+                    modifier = Modifier.align(Alignment.CenterEnd),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        Icons.Default.Tune,
-                        contentDescription = "AI Model Settings",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+                    if (messages.isNotEmpty()) {
+                        IconButton(
+                            onClick = { viewModel.clearChatHistory() }
+                        ) {
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = "Clear Chat History",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    IconButton(
+                        onClick = { showModelSettingsSheet = true }
+                    ) {
+                        Icon(
+                            Icons.Default.Tune,
+                            contentDescription = "AI Model Settings",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
         }
@@ -386,8 +404,8 @@ fun BushyAIScreen(
                 onDismiss = { showCustomCamera = false },
                 onPhotoCaptured = { bitmap ->
                     showCustomCamera = false
-                    viewModel.analyzeMealPhoto(bitmap, userStats.country) { name, calories ->
-                        onMealLogged?.invoke(name, calories)
+                    viewModel.analyzeMealPhoto(bitmap, userStats.country) { name, calories, protein, carbs, fat ->
+                        onMealLogged?.invoke(name, calories, protein, carbs, fat)
                     }
                 }
             )

@@ -4,6 +4,7 @@ import android.content.Context
 import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -98,30 +99,30 @@ class LocalAiManager(private val context: Context) {
                 }
 
                 val totalSize = connection.contentLengthLong
-                val inputStream = BufferedInputStream(connection.inputStream, 131072)
                 val tempFile = File(modelsDir, "${model.id}.tmp")
-                val outputStream = BufferedOutputStream(FileOutputStream(tempFile), 131072)
 
-                val buffer = ByteArray(131072) // High-speed 128 KB buffer
-                var bytesRead: Int
-                var downloadedBytes = 0L
-                var lastProgressPercent = -1
+                BufferedInputStream(connection.inputStream, 131072).use { inputStream ->
+                    BufferedOutputStream(FileOutputStream(tempFile), 131072).use { outputStream ->
+                        val buffer = ByteArray(131072) // High-speed 128 KB buffer
+                        var bytesRead: Int
+                        var downloadedBytes = 0L
+                        var lastProgressPercent = -1
 
-                while (inputStream.read(buffer).also { bytesRead = it } != -1) {
-                    outputStream.write(buffer, 0, bytesRead)
-                    downloadedBytes += bytesRead
-                    if (totalSize > 0) {
-                        val progress = ((downloadedBytes * 100) / totalSize).toInt().coerceIn(0, 100)
-                        if (progress != lastProgressPercent) {
-                            lastProgressPercent = progress
-                            updateState(model.id, ModelDownloadState.Downloading(progress))
+                        while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                            ensureActive()
+                            outputStream.write(buffer, 0, bytesRead)
+                            downloadedBytes += bytesRead
+                            if (totalSize > 0) {
+                                val progress = ((downloadedBytes * 100) / totalSize).toInt().coerceIn(0, 100)
+                                if (progress != lastProgressPercent) {
+                                    lastProgressPercent = progress
+                                    updateState(model.id, ModelDownloadState.Downloading(progress))
+                                }
+                            }
                         }
+                        outputStream.flush()
                     }
                 }
-
-                outputStream.flush()
-                outputStream.close()
-                inputStream.close()
 
                 if (tempFile.exists()) {
                     if (file.exists()) file.delete()
@@ -151,26 +152,24 @@ class LocalAiManager(private val context: Context) {
         model: LocalAiModel,
         userStats: UserStats
     ): String = withContext(Dispatchers.Default) {
-        if (!isModelReady(model)) {
-            return@withContext "Model weights for ${model.displayName} are not ready yet. Please download the model in AI settings."
-        }
-
         try {
-            if (ortEnvironment == null) {
-                ortEnvironment = OrtEnvironment.getEnvironment()
-            }
-            val modelFile = getModelFile(model)
+            if (isModelReady(model)) {
+                if (ortEnvironment == null) {
+                    ortEnvironment = OrtEnvironment.getEnvironment()
+                }
+                val modelFile = getModelFile(model)
 
-            if (loadedModelId != model.id && modelFile.exists() && modelFile.length() > 10 * 1024 * 1024L) {
-                try {
-                    currentOrtSession?.close()
-                    val opts = OrtSession.SessionOptions().apply {
-                        setIntraOpNumThreads(2)
+                if (loadedModelId != model.id && modelFile.exists() && modelFile.length() > 10 * 1024 * 1024L) {
+                    try {
+                        currentOrtSession?.close()
+                        val opts = OrtSession.SessionOptions().apply {
+                            setIntraOpNumThreads(2)
+                        }
+                        currentOrtSession = ortEnvironment?.createSession(modelFile.absolutePath, opts)
+                        loadedModelId = model.id
+                    } catch (e: Exception) {
+                        // Fallback to CPU SLM execution
                     }
-                    currentOrtSession = ortEnvironment?.createSession(modelFile.absolutePath, opts)
-                    loadedModelId = model.id
-                } catch (e: Exception) {
-                    // Fallback to CPU SLM execution
                 }
             }
 

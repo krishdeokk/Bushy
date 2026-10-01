@@ -24,7 +24,11 @@ object ShareUtils {
             type = "text/plain"
         }
 
-        val shareIntent = Intent.createChooser(sendIntent, "Share your progress")
+        val shareIntent = Intent.createChooser(sendIntent, "Share your progress").apply {
+            if (context !is android.app.Activity) {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+        }
         context.startActivity(shareIntent)
     }
 
@@ -32,22 +36,25 @@ object ShareUtils {
         try {
             val cachePath = File(context.cacheDir, "images")
             cachePath.mkdirs()
-            val stream = FileOutputStream("$cachePath/image.png")
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
-            stream.close()
+            val imageFile = File(cachePath, "bushy_share_${System.currentTimeMillis()}.png")
+            FileOutputStream(imageFile).use { stream ->
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+            }
 
-            val imagePath = File(context.cacheDir, "images")
-            val newFile = File(imagePath, "image.png")
-            val contentUri: Uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", newFile)
+            val contentUri: Uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", imageFile)
 
             val shareIntent = Intent().apply {
                 action = Intent.ACTION_SEND
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                setDataAndType(contentUri, context.contentResolver.getType(contentUri))
+                setDataAndType(contentUri, "image/png")
                 putExtra(Intent.EXTRA_STREAM, contentUri)
-                type = "image/png"
             }
-            context.startActivity(Intent.createChooser(shareIntent, title))
+            val chooser = Intent.createChooser(shareIntent, title).apply {
+                if (context !is android.app.Activity) {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+            }
+            context.startActivity(chooser)
         } catch (e: Exception) {
             e.printStackTrace()
         }
