@@ -11,6 +11,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -19,6 +20,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
@@ -154,7 +156,7 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
     Scaffold(
         modifier = Modifier
             .pointerInput(Unit) {
-                detectTapGestures(onPress = { 
+                detectTapGestures(onTap = { 
                     viewModel.onScreenTouch() 
                 })
             },
@@ -432,7 +434,12 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
             }
 
             // DYNAMIC NAVIGATION PILL
-            val isBushyAITab = pagerState.currentPage == 2
+            val currentFraction by remember {
+                derivedStateOf {
+                    pagerState.currentPage + pagerState.currentPageOffsetFraction
+                }
+            }
+            val isBushyAITab = currentFraction > 1.4f
             val isKeyboardVisible = WindowInsets.isImeVisible
             var isTappedPulse by remember { mutableStateOf(false) }
 
@@ -448,29 +455,26 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
 
             val isShrunk by remember { 
                 derivedStateOf { 
+                    isListScrollingDown || 
                     pagerState.isScrollInProgress || 
-                    abs(pagerState.currentPageOffsetFraction) > 0.01f ||
-                    isListScrollingDown
+                    abs(pagerState.currentPageOffsetFraction) > 0.01f
                 } 
             }
 
             val pillScale by animateFloatAsState(
-                targetValue = if (isTappedPulse) 1.18f else 1.05f,
+                targetValue = when {
+                    isTappedPulse -> 1.12f
+                    isShrunk -> 0.85f
+                    else -> 1.00f
+                },
                 animationSpec = spring(
-                    dampingRatio = if (isTappedPulse) Spring.DampingRatioLowBouncy else Spring.DampingRatioNoBouncy,
-                    stiffness = Spring.StiffnessMedium
+                    dampingRatio = if (isTappedPulse) Spring.DampingRatioLowBouncy else 0.8f,
+                    stiffness = Spring.StiffnessMediumLow
                 ),
                 label = "PillScale"
             )
 
-            val pillHeight by animateDpAsState(
-                targetValue = if (isTappedPulse) 90.dp else 84.dp,
-                animationSpec = spring(
-                    dampingRatio = if (isTappedPulse) Spring.DampingRatioLowBouncy else Spring.DampingRatioNoBouncy,
-                    stiffness = Spring.StiffnessMedium
-                ),
-                label = "PillHeight"
-            )
+            var pillDragAmount by remember { mutableFloatStateOf(0f) }
 
             Box(
                 modifier = Modifier
@@ -481,7 +485,7 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
             ) {
                 AnimatedVisibility(
                     visible = !isKeyboardVisible && !isBushyAITab,
-                    enter = fadeIn(spring(stiffness = Spring.StiffnessMediumLow)) + scaleIn(spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessMediumLow)),
+                    enter = fadeIn(spring(stiffness = Spring.StiffnessMediumLow)) + scaleIn(spring(dampingRatio = 0.8f, stiffness = Spring.StiffnessMediumLow)),
                     exit = fadeOut(spring(stiffness = Spring.StiffnessMediumLow)) + scaleOut(spring(stiffness = Spring.StiffnessMediumLow))
                 ) {
                     Surface(
@@ -496,60 +500,82 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
                         color = MaterialTheme.colorScheme.surface,
                         shape = CircleShape,
                         border = BorderStroke(
-                            width = 1.5.dp,
+                            width = 2.dp,
                             color = if (uiState.visualStyle == VisualStyle.MONOCHROME) 
                                 MaterialTheme.colorScheme.onBackground
                             else 
-                                MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                                MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)
                         ),
                         modifier = Modifier
+                            .pointerInput(Unit) {
+                                detectHorizontalDragGestures(
+                                    onDragStart = { pillDragAmount = 0f },
+                                    onDragEnd = {
+                                        val targetPage = when {
+                                            pillDragAmount < -30f -> (pagerState.currentPage + 1).coerceAtMost(2)
+                                            pillDragAmount > 30f -> (pagerState.currentPage - 1).coerceAtLeast(0)
+                                            else -> pagerState.currentPage
+                                        }
+                                        if (targetPage != pagerState.currentPage) {
+                                            performSubtleClick()
+                                            scope.launch {
+                                                isTappedPulse = true
+                                                pagerState.animateScrollToPage(
+                                                    targetPage,
+                                                    animationSpec = spring(
+                                                        dampingRatio = 0.8f,
+                                                        stiffness = Spring.StiffnessMediumLow
+                                                    )
+                                                )
+                                                delay(250)
+                                                isTappedPulse = false
+                                            }
+                                        }
+                                    },
+                                    onHorizontalDrag = { change, dragAmount ->
+                                        change.consume()
+                                        pillDragAmount += dragAmount
+                                    }
+                                )
+                            }
                             .graphicsLayer {
                                 scaleX = pillScale
                                 scaleY = pillScale
                                 transformOrigin = TransformOrigin.Center
                             }
-                            .animateContentSize(
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioNoBouncy,
-                                    stiffness = Spring.StiffnessMedium
-                                )
-                            )
                             .wrapContentWidth()
-                            .height(pillHeight),
+                            .height(86.dp),
                         shadowElevation = 0.dp,
                         tonalElevation = 0.dp
                     ) {
                         Row(
                             modifier = Modifier
-                                .padding(6.dp)
+                                .padding(8.dp)
                                 .wrapContentWidth()
                                 .fillMaxHeight(),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             PillTabItem(
                                 selected = pagerState.currentPage == 0,
                                 onClick = { onPillClick(0) },
                                 label = "Home",
                                 icon = Icons.Default.Home,
-                                selectedColor = MaterialTheme.colorScheme.primary,
-                                isCollapsed = isShrunk
+                                selectedColor = MaterialTheme.colorScheme.primary
                             )
                             PillTabItem(
                                 selected = pagerState.currentPage == 1,
                                 onClick = { onPillClick(1) },
                                 label = "Tasks",
                                 icon = Icons.AutoMirrored.Filled.Assignment,
-                                selectedColor = MaterialTheme.colorScheme.primary,
-                                isCollapsed = isShrunk
+                                selectedColor = MaterialTheme.colorScheme.primary
                             )
                             PillTabItem(
                                 selected = pagerState.currentPage == 2,
                                 onClick = { onPillClick(2) },
                                 label = "Bushy",
                                 icon = Icons.Default.AutoAwesome,
-                                selectedColor = MaterialTheme.colorScheme.primary,
-                                isCollapsed = isShrunk
+                                selectedColor = MaterialTheme.colorScheme.primary
                             )
                         }
                     }
@@ -961,64 +987,35 @@ fun PillTabItem(
     label: String,
     icon: ImageVector,
     modifier: Modifier = Modifier,
-    selectedColor: Color,
-    isCollapsed: Boolean = false
+    selectedColor: Color
 ) {
-    val showLabel = selected && !isCollapsed
+    val animatedBgColor by animateColorAsState(
+        targetValue = if (selected) selectedColor else Color.Transparent,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "PillTabBgColor"
+    )
 
-    val horizontalPadding by animateDpAsState(
-        targetValue = when {
-            showLabel -> 32.dp
-            selected -> 22.dp
-            else -> 18.dp
-        },
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioNoBouncy,
-            stiffness = Spring.StiffnessMedium
-        ),
-        label = "PillTabPadding"
+    val animatedContentColor by animateColorAsState(
+        targetValue = if (selected) contentColorFor(selectedColor) else MaterialTheme.colorScheme.onSurfaceVariant,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "PillTabContentColor"
     )
 
     Surface(
         onClick = onClick,
-        color = if (selected) selectedColor else Color.Transparent,
-        contentColor = if (selected) contentColorFor(selectedColor) else MaterialTheme.colorScheme.onSurfaceVariant,
+        color = animatedBgColor,
+        contentColor = animatedContentColor,
         shape = CircleShape,
         modifier = modifier
-            .padding(vertical = 4.dp, horizontal = 2.dp)
+            .padding(2.dp)
+            .aspectRatio(1f)
             .fillMaxHeight()
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = horizontalPadding),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
         ) {
-            Icon(icon, contentDescription = null, modifier = Modifier.size(28.dp))
-            AnimatedVisibility(
-                visible = showLabel,
-                enter = expandHorizontally(
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioNoBouncy,
-                        stiffness = Spring.StiffnessMedium
-                    )
-                ) + fadeIn(animationSpec = spring(stiffness = Spring.StiffnessMedium)),
-                exit = shrinkHorizontally(
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioNoBouncy,
-                        stiffness = Spring.StiffnessMedium
-                    )
-                ) + fadeOut(animationSpec = spring(stiffness = Spring.StiffnessMedium))
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Text(
-                        label, 
-                        fontWeight = FontWeight.ExtraBold, 
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 1
-                    )
-                }
-            }
+            Icon(icon, contentDescription = label, modifier = Modifier.size(28.dp))
         }
     }
 }
