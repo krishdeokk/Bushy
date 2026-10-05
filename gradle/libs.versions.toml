@@ -16,9 +16,9 @@ materialIconsExtended = "1.7.8"
 material = "1.14.0"
 capturable = "3.0.1"
 coil = "2.7.0"
-camerax = "1.6.2"
+camerax = "1.4.1"
 graphicsPath = "1.1.0"
-onnxruntime = "1.20.0"
+onnxruntime = "1.30.0"
 
 [libraries]
 androidx-graphics-path = { group = "androidx.graphics", name = "graphics-path", version.ref = "graphicsPath" }
