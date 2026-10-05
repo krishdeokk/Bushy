@@ -63,7 +63,7 @@ fun BloubAvatar(
         }
     }
 
-    LaunchedEffect(expression, timeInSeconds) {
+    LaunchedEffect(expression) {
         engine.updateExpression(expression, timeInSeconds)
     }
 
