@@ -175,6 +175,11 @@ private fun CameraContent(
     val maxZoomRatio = zoomState?.maxZoomRatio ?: 10f
 
     val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
+    DisposableEffect(cameraExecutor) {
+        onDispose {
+            cameraExecutor.shutdown()
+        }
+    }
 
     val vibrator = remember {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -214,8 +219,25 @@ private fun CameraContent(
         return list
     }
 
-    // Rebind CameraX whenever lensFacing or selected physical camera changes
-    LaunchedEffect(lensFacing, selectedTargetRatio) {
+    val physicalLenses = remember(context) { discoverPhysicalBackLenses(context) }
+    val activePhysicalLensId = remember(lensFacing, selectedTargetRatio, physicalLenses) {
+        if (lensFacing == CameraSelector.LENS_FACING_BACK && physicalLenses.isNotEmpty()) {
+            val sorted = physicalLenses.sortedBy { it.second }
+            val ultraWide = sorted.firstOrNull { it.second < 3.2f } ?: sorted.first()
+            val telephoto = sorted.lastOrNull { it.second > 8.0f } ?: sorted.last()
+            val mainLens = sorted.firstOrNull { it.second in 3.2f..8.0f } ?: sorted.first()
+            when {
+                selectedTargetRatio <= 0.6f -> ultraWide.first
+                selectedTargetRatio >= 2.8f -> telephoto.first
+                else -> mainLens.first
+            }
+        } else {
+            null
+        }
+    }
+
+    // Rebind CameraX only when lensFacing or physical camera lens changes
+    LaunchedEffect(lensFacing, activePhysicalLensId) {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
         cameraProviderFuture.addListener({
             val cameraProvider = cameraProviderFuture.get()
@@ -228,17 +250,6 @@ private fun CameraContent(
                 .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
                 .setTargetAspectRatio(AspectRatio.RATIO_4_3)
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                try {
-                    Camera2Interop.Extender(previewBuilder)
-                        .setCaptureRequestOption(CaptureRequest.CONTROL_ZOOM_RATIO, selectedTargetRatio)
-                    Camera2Interop.Extender(captureBuilder)
-                        .setCaptureRequestOption(CaptureRequest.CONTROL_ZOOM_RATIO, selectedTargetRatio)
-                } catch (e: Exception) {
-                    Log.e("BushyCamera", "Camera2Interop zoom error", e)
-                }
-            }
-
             val preview = previewBuilder.build()
             val capture = captureBuilder.build()
 
@@ -246,33 +257,19 @@ private fun CameraContent(
                 .requireLensFacing(lensFacing)
                 .build()
 
-            if (lensFacing == CameraSelector.LENS_FACING_BACK) {
-                val physicalLenses = discoverPhysicalBackLenses(context)
-                if (physicalLenses.isNotEmpty()) {
-                    val sorted = physicalLenses.sortedBy { it.second }
-                    val ultraWide = sorted.firstOrNull { it.second < 3.2f } ?: sorted.first()
-                    val telephoto = sorted.lastOrNull { it.second > 8.0f } ?: sorted.last()
-                    val mainLens = sorted.firstOrNull { it.second in 3.2f..8.0f } ?: sorted.first()
-
-                    val targetPhysical = when {
-                        selectedTargetRatio <= 0.6f -> ultraWide
-                        selectedTargetRatio >= 2.8f -> telephoto
-                        else -> mainLens
-                    }
-
-                    targetSelector = CameraSelector.Builder()
-                        .addCameraFilter { cameraInfos ->
-                            val matched = cameraInfos.filter { info ->
-                                try {
-                                    Camera2CameraInfo.from(info).cameraId == targetPhysical.first
-                                } catch (e: Exception) {
-                                    false
-                                }
+            if (lensFacing == CameraSelector.LENS_FACING_BACK && activePhysicalLensId != null) {
+                targetSelector = CameraSelector.Builder()
+                    .addCameraFilter { cameraInfos ->
+                        val matched = cameraInfos.filter { info ->
+                            try {
+                                Camera2CameraInfo.from(info).cameraId == activePhysicalLensId
+                            } catch (e: Exception) {
+                                false
                             }
-                            if (matched.isNotEmpty()) matched else cameraInfos
                         }
-                        .build()
-                }
+                        if (matched.isNotEmpty()) matched else cameraInfos
+                    }
+                    .build()
             }
 
             try {
@@ -305,6 +302,19 @@ private fun CameraContent(
                 Log.e("BushyCamera", "Camera binding failed", e)
             }
         }, ContextCompat.getMainExecutor(context))
+    }
+
+    // Smooth digital zoom without tearing down CameraX
+    LaunchedEffect(selectedTargetRatio, cameraControl) {
+        val control = cameraControl ?: return@LaunchedEffect
+        val currentMin = cameraInfo?.zoomState?.value?.minZoomRatio ?: 0.5f
+        val currentMax = cameraInfo?.zoomState?.value?.maxZoomRatio ?: 10f
+        val clampedZoom = selectedTargetRatio.coerceIn(currentMin, currentMax)
+        try {
+            control.setZoomRatio(clampedZoom)
+        } catch (e: Exception) {
+            Log.e("BushyCamera", "setZoomRatio error", e)
+        }
     }
 
     // Update flash mode
@@ -516,18 +526,28 @@ private fun CameraContent(
                                                         val rotated = Bitmap.createBitmap(
                                                             rawBitmap, 0, 0, rawBitmap.width, rawBitmap.height, matrix, true
                                                         )
+                                                        if (rotated != rawBitmap) {
+                                                            rawBitmap.recycle()
+                                                        }
 
                                                         // Crop bitmap to exact 3:4 aspect ratio
                                                         val cropped = cropTo3By4(rotated)
+                                                        if (cropped != rotated) {
+                                                            rotated.recycle()
+                                                        }
 
                                                         image.close()
-                                                        capturedBitmap = cropped
-                                                        isCapturing = false
+                                                        ContextCompat.getMainExecutor(context).execute {
+                                                            capturedBitmap = cropped
+                                                            isCapturing = false
+                                                        }
                                                     }
 
                                                     override fun onError(exception: ImageCaptureException) {
                                                         Log.e("BushyCamera", "Capture failed", exception)
-                                                        isCapturing = false
+                                                        ContextCompat.getMainExecutor(context).execute {
+                                                            isCapturing = false
+                                                        }
                                                     }
                                                 }
                                             )
