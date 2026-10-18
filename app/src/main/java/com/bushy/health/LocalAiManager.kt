@@ -255,12 +255,24 @@ class LocalAiManager(private val context: Context) {
 
             // 8. Identity & Model Info
             lower.contains("who are you") || lower.contains("what are you") || lower.contains("name") || lower.contains("bushy") -> {
-                "I am Bushy Wushy, your local AI fitness companion running 100% on-device using ${model.displayName}! I help you track steps, deploy missions, log meals, and level up."
+                "I am Bushy Wushy, your local AI fitness companion! I am running 100% offline on your device using the ${model.displayName} model via ONNX Runtime. Your data is totally private!"
             }
 
-            // 9. App Features & Tabs
+            // 9. App Features, Architecture & XP Math
+            lower.contains("how it works") || lower.contains("how does it work") || lower.contains("architecture") || lower.contains("tech stack") -> {
+                "I'm built using modern Android tech: Kotlin, Jetpack Compose, and Health Connect! I run my AI offline using ONNX Runtime, so your health data never leaves your phone."
+            }
+            lower.contains("xp") && (lower.contains("math") || lower.contains("calculate") || lower.contains("how")) -> {
+                "Your Level is calculated mathematically: Level = sqrt(XP / 100) + 1. This means leveling up gets progressively harder, just like a real RPG! Keep walking to earn more XP."
+            }
+            lower.contains("health connect") || lower.contains("sync") || lower.contains("step count") -> {
+                "Bushy smartly syncs your steps using Android's Health Connect API. It calculates your daily aggregate steps from midnight, saving your battery while keeping your stats accurate!"
+            }
+            lower.contains("privacy") || lower.contains("safe") || lower.contains("offline") -> {
+                "Your privacy is my top priority! All your health data is read locally via Health Connect, and my AI brain (${model.displayName}) runs entirely on your device. No cloud, no tracking!"
+            }
             lower.contains("how to") || lower.contains("feature") || lower.contains("tab") || lower.contains("camera") || lower.contains("theme") -> {
-                "Bushy has 3 tabs: 1. Home (view stats & level), 2. Tasks (daily missions), 3. Bushy Wushy AI (on-device AI chat & meal camera scanner)."
+                "Bushy has 3 main areas: 1. Home (your RPG stats & dynamic avatar), 2. Tasks (daily fitness missions), 3. Bushy Wushy AI (my offline chat & camera scanner)."
             }
 
             // 10. General Fitness Guidance Fallback
