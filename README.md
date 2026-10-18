@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>☁️ Bushy</h1>
+  <h1>Bushy ☁️</h1>
   <p><b>Turn your real-life grind into a game. Complete fitness quests, earn XP, level up your character, and flex your progress. 🎮💪</b></p>
 </div>
 
