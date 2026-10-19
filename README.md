@@ -15,7 +15,7 @@ Beyond gamification, Bushy features a **Local AI Coach** running entirely on-dev
 * **🤖 Local AI Coach (Bushy AI):** Powered by ONNX Runtime, our on-device AI runs directly on your phone. Ask for workout plans, nutritional advice, and motivation—no internet connection required!
 * **🔗 Health Connect Integration:** Seamlessly syncs your daily steps and health metrics securely from other fitness apps.
 * **🎯 Daily Quests & Tasks:** Set custom targets for steps, pushups, and more.
-* **🥗 Diet & Nutrition Logging:** Track your meals, calories, and macronutrients (protein, carbs, fats).
+* **🥗 Indian Meal Calorie Estimator:** Photo scanning & interactive food portion editor powered by an offline Indian Nutrition Database (Anuvaad INDB / ICMR standards). Supports portion choices (*Katori*, *Piece*, *Cup*, *Tbsp*, *Grams*) and preparation styles (*Homemade Low-Oil* vs *Restaurant Rich*).
 * **👤 Dynamic Avatars:** Your avatar's expression changes based on your current fitness streak and activity.
 * **🎨 Modern UI:** Built entirely using Jetpack Compose with beautiful Material 3 design, dynamic theming, and Dark Mode support.
 
@@ -47,7 +47,29 @@ graph TD
     style E fill:#FF9800,stroke:#F57C00,stroke-width:2px,color:white
 ```
 
-### 3. Data Syncing: Health Connect
+### 3. Indian Meal Calorie Estimation & Nutrition Engine
+Bushy includes an **Indian Meal Calorie Estimator** designed specifically for Indian food culture:
+* **Separation of Vision & Nutrition:** Food identification is decoupled from calorie math. The vision pipeline (`VisionFoodAnalyzer`) identifies candidate dishes, while the offline `IndianNutritionDatabase` calculates exact calories and macros.
+* **Multilingual Dish Name Correction:** Users can tap any dish name to correct it in English or **9 Indian state languages & scripts**:
+  - Devanagari (Hindi / Marathi)
+  - Bengali / Assamese
+  - Tamil
+  - Telugu
+  - Gujarati
+  - Kannada
+  - Malayalam
+  - Gurmukhi (Punjabi)
+  - English & Romanized Transliterations / Hinglish
+* **Fuzzy Typo & Ambiguity Matcher (`MultilingualDishInterpreter`):** Handles common typos (e.g., *paner*, *chappati*, *biryanie*) using Levenshtein distance, suggests non-destructive corrections, and disambiguates generic queries (e.g. *dal* $\rightarrow$ Dal Tadka, Dal Makhani, Dal Khichdi).
+* **Portion Units:** Users can adjust serving sizes using intuitive Indian culinary units: `Katori (Bowl)`, `Piece`, `Cup`, `Tablespoon`, or `Grams`.
+* **Preparation Uncertainty:** Recipes vary widely in oil and ghee usage. Bushy allows users to toggle preparation styles (`Homemade Low-Oil`, `Standard`, `Restaurant Rich`) and displays realistic calorie uncertainty ranges (e.g., `310 - 380 kcal`).
+* **Offline Nutrition Ground Truth:** Based on Anuvaad INDB and ICMR nutrition data.
+
+#### Local Qwen Vision Model (VLM) Runtime Considerations
+* **Feasibility & Trade-offs:** Running multi-modal Vision-Language Models on-device (like Qwen2-VL-2B or Qwen3-VL) requires 1.8 GB – 2.2 GB 4-bit quantized files and 6 GB+ RAM. Standard `onnxruntime-android` handles single-graph execution; multi-modal VLM execution requires native C++ JNI bindings (such as `llama.cpp` or `Executorch`).
+* **Transparent Pipeline:** Bushy uses a modular `VisionFoodAnalyzer` abstraction layer and provides an **AI Status Info Dialog**, clearly distinguishing between heuristic feature recognition and local VLM inference.
+
+### 4. Data Syncing: Health Connect
 Instead of draining battery by counting steps in the background, Bushy integrates with the **Android Health Connect API**.
 * Securely reads aggregate daily steps from midnight.
 * Automatically updates your XP and step missions when you open the app.

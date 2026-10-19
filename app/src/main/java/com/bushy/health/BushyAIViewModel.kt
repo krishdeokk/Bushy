@@ -8,14 +8,16 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
+import org.json.JSONArray
+import java.util.UUID
 
 class BushyAIViewModel(application: Application) : AndroidViewModel(application) {
 
     private val prefs = application.getSharedPreferences("bushy_ai_prefs", Context.MODE_PRIVATE)
     private val localAiManager = LocalAiManager(application)
+    private val visionFoodAnalyzer: VisionFoodAnalyzer = LocalVisionFoodAnalyzer()
 
     private val _selectedModel = MutableStateFlow(
         LocalAiModel.fromId(prefs.getString("selected_ai_model", LocalAiModel.SMOLLM_360M.id) ?: LocalAiModel.SMOLLM_360M.id)
@@ -35,8 +37,53 @@ class BushyAIViewModel(application: Application) : AndroidViewModel(application)
     )
     val messages: StateFlow<List<BushyAIMessage>> = _messages.asStateFlow()
 
+    // Active Meal Analysis State for Editable Portion UI
+    private val _activeMealAnalysisResult = MutableStateFlow<MealAnalysisResult?>(null)
+    val activeMealAnalysisResult: StateFlow<MealAnalysisResult?> = _activeMealAnalysisResult.asStateFlow()
+
+    private val _activeMealBitmap = MutableStateFlow<Bitmap?>(null)
+    val activeMealBitmap: StateFlow<Bitmap?> = _activeMealBitmap.asStateFlow()
+
+    // Logged Meals History State
+    private val _loggedMeals = MutableStateFlow<List<LoggedMeal>>(
+        parseLoggedMealsJson(prefs.getString("saved_logged_meals", null))
+    )
+    val loggedMeals: StateFlow<List<LoggedMeal>> = _loggedMeals.asStateFlow()
+
     private fun persistMessages(list: List<BushyAIMessage>) {
         prefs.edit().putString("saved_ai_messages", list.takeLast(60).messagesToJsonString()).apply()
+    }
+
+    private fun persistLoggedMeals(list: List<LoggedMeal>) {
+        val jsonArray = JSONArray()
+        list.takeLast(100).forEach { jsonArray.put(it.toJson()) }
+        prefs.edit().putString("saved_logged_meals", jsonArray.toString()).apply()
+    }
+
+    private fun parseLoggedMealsJson(jsonStr: String?): List<LoggedMeal> {
+        if (jsonStr.isNullOrBlank()) return emptyList()
+        val list = mutableListOf<LoggedMeal>()
+        try {
+            val jsonArray = JSONArray(jsonStr)
+            for (i in 0 until jsonArray.length()) {
+                val obj = jsonArray.getJSONObject(i)
+                list.add(
+                    LoggedMeal(
+                        id = obj.optString("id", UUID.randomUUID().toString()),
+                        name = obj.optString("name", "Meal"),
+                        calories = obj.optInt("calories", 0),
+                        proteinGrams = obj.optInt("proteinGrams", 0),
+                        carbsGrams = obj.optInt("carbsGrams", 0),
+                        fatGrams = obj.optInt("fatGrams", 0),
+                        country = obj.optString("country", "India"),
+                        timestamp = obj.optLong("timestamp", System.currentTimeMillis())
+                    )
+                )
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return list
     }
 
     fun clearChatHistory() {
@@ -77,6 +124,10 @@ class BushyAIViewModel(application: Application) : AndroidViewModel(application)
         _isUserTyping.value = isTyping
     }
 
+    fun interpretDishText(rawInput: String): DishInterpretationResult {
+        return MultilingualDishInterpreter.interpretDishText(rawInput)
+    }
+
     fun tryParseTaskLocal(userText: String): TaskParseResult? = Companion.tryParseTaskLocal(userText)
 
     fun sendMessage(userText: String, userStats: UserStats, onDeployTask: ((String, Int, TaskType) -> Unit)? = null) {
@@ -85,10 +136,9 @@ class BushyAIViewModel(application: Application) : AndroidViewModel(application)
         val userMessage = BushyAIMessage(text = userText, isUser = true)
         val withUser = _messages.updateAndGet { it + userMessage }
         persistMessages(withUser)
-        
+
         _isUserTyping.value = false
 
-        // On-device task automation parsing - bypasses LLM completely for instant execution
         val localTask = tryParseTaskLocal(userText)
         if (localTask != null) {
             onDeployTask?.invoke(localTask.title, localTask.target, localTask.type)
@@ -98,12 +148,16 @@ class BushyAIViewModel(application: Application) : AndroidViewModel(application)
         }
 
         _isGenerating.value = true
-
         val activeModel = _selectedModel.value
 
         viewModelScope.launch {
             try {
-                val localResponse = localAiManager.generateLocalResponse(userText, activeModel, userStats)
+                val localResponse = localAiManager.generateLocalResponse(
+                    prompt = userText,
+                    model = activeModel,
+                    userStats = userStats,
+                    todayLoggedMeals = _loggedMeals.value
+                )
                 val withResponse = _messages.updateAndGet { it + BushyAIMessage(text = localResponse, isUser = false) }
                 persistMessages(withResponse)
             } catch (e: Exception) {
@@ -116,132 +170,80 @@ class BushyAIViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun analyzeMealPhoto(
-        bitmap: Bitmap, 
-        country: String, 
+        bitmap: Bitmap,
+        country: String,
         onResult: (name: String, calories: Int, protein: Int, carbs: Int, fat: Int) -> Unit
     ) {
         _isGenerating.value = true
+        _activeMealBitmap.value = bitmap
+
         viewModelScope.launch {
             try {
-                val maxDim = maxOf(bitmap.width, bitmap.height)
-                val workingBitmap = if (maxDim > 512) {
-                    val scale = 512f / maxDim
-                    Bitmap.createScaledBitmap(
-                        bitmap,
-                        (bitmap.width * scale).toInt().coerceAtLeast(2),
-                        (bitmap.height * scale).toInt().coerceAtLeast(2),
-                        true
-                    )
-                } else {
-                    bitmap
-                }
+                val analysisResult = visionFoodAnalyzer.analyzeMealPhoto(bitmap, country)
+                _activeMealAnalysisResult.value = analysisResult
 
-                // Ensure bitmap is software-readable (convert hardware bitmap if needed)
-                val safeBitmap = if (workingBitmap.config == Bitmap.Config.HARDWARE) {
-                    workingBitmap.copy(Bitmap.Config.ARGB_8888, false)
-                } else {
-                    workingBitmap
-                } ?: workingBitmap
-
-                val width = safeBitmap.width.coerceAtLeast(2)
-                val height = safeBitmap.height.coerceAtLeast(2)
-
-                // Sample multiple region colors across the plate
-                val centerPixel = safeBitmap.getPixel(width / 2, height / 2)
-                val topPixel = safeBitmap.getPixel(width / 2, height / 4)
-
-                val r = ((centerPixel shr 16) and 0xFF) + ((topPixel shr 16) and 0xFF)
-                val g = ((centerPixel shr 8) and 0xFF) + ((topPixel shr 8) and 0xFF)
-                val b = (centerPixel and 0xFF) + (topPixel and 0xFF)
-
-                val isIndia = country.trim().lowercase().contains("india")
-
-                val mealName: String
-                val itemsBreakdown: List<Pair<String, Int>>
-                val proteinG: Int
-                val carbsG: Int
-                val fatG: Int
-
-                when {
-                    // Golden / Yellow (Dal / Rice / Khichdi)
-                    r > b * 1.2 && g > b * 1.1 -> {
-                        mealName = if (isIndia) "Dal Tadka & Rice Thali" else "Golden Rice & Veggie Bowl"
-                        itemsBreakdown = listOf(
-                            "Dal Tadka (1 bowl)" to 160,
-                            "Steamed Basmati Rice (1 bowl)" to 180,
-                            "Cucumber & Onion Salad" to 40,
-                            "Roasted Papad" to 30
-                        )
-                        proteinG = 16
-                        carbsG = 68
-                        fatG = 8
-                    }
-                    // Reddish / Orange (Paneer Butter Masala / Chicken Tikka / Curry)
-                    r > g * 1.15 && r > b * 1.2 -> {
-                        mealName = if (isIndia) "Paneer Tikka & Roti Thali" else "Protein Curry Meal"
-                        itemsBreakdown = listOf(
-                            "Tandoori Paneer / Curry" to 260,
-                            "Whole Wheat Roti (2 pcs)" to 160,
-                            "Mint Chutney & Salad" to 40
-                        )
-                        proteinG = 24
-                        carbsG = 48
-                        fatG = 18
-                    }
-                    // Green (Palak / Saag / Salad)
-                    g > r && g > b -> {
-                        mealName = if (isIndia) "Palak Paneer & Salad Bowl" else "Fresh Green Protein Salad"
-                        itemsBreakdown = listOf(
-                            "Steamed Greens & Vegetables" to 80,
-                            "Grilled Cottage Cheese / Tofu" to 180,
-                            "Lemon Vinaigrette Dressing" to 60
-                        )
-                        proteinG = 20
-                        carbsG = 22
-                        fatG = 16
-                    }
-                    // Tan / Light Brown (Roti / Paratha / Dosa / Idli)
-                    else -> {
-                        mealName = if (isIndia) "Roti & Sabzi Combo" else "Healthy $country Meal"
-                        itemsBreakdown = listOf(
-                            "Whole Wheat Chapati (2 pcs)" to 160,
-                            "Mixed Vegetable Sabzi" to 150,
-                            "Curd / Dahi (1 small cup)" to 70
-                        )
-                        proteinG = 14
-                        carbsG = 60
-                        fatG = 10
-                    }
-                }
-
-                val totalCalories = itemsBreakdown.sumOf { it.second }
-                onResult(mealName, totalCalories, proteinG, carbsG, fatG)
-
-                val breakdownText = StringBuilder().apply {
-                    append("🍱 Photo Scanned & Logged: $mealName\n\nScanned Items:\n")
-                    itemsBreakdown.forEach { (item, cal) ->
-                        append("• $item: $cal kcal\n")
-                    }
-                    append("─────────────────────────\n")
-                    append("Total: $totalCalories kcal • ${proteinG}g Protein • ${carbsG}g Carbs • ${fatG}g Fat\nAdded to your daily log!")
-                }.toString()
-
-                val newMessages = _messages.updateAndGet { it + BushyAIMessage(text = breakdownText, isUser = false) }
-                persistMessages(newMessages)
+                val totals = analysisResult.totalNutrients
+                onResult(
+                    analysisResult.mealName,
+                    totals.calories,
+                    totals.proteinG.toInt(),
+                    totals.carbsG.toInt(),
+                    totals.fatG.toInt()
+                )
             } catch (e: Exception) {
                 e.printStackTrace()
-                val totalCalories = 400
-                val proteinG = 18
-                val carbsG = 50
-                val fatG = 14
-                onResult("Healthy Meal", totalCalories, proteinG, carbsG, fatG)
-                val fallbackText = "🍱 Photo Scanned & Logged: Healthy Meal\n\nScanned Items:\n• Healthy Meal Portion: 320 kcal\n• Fresh Salad Side: 80 kcal\n─────────────────────────\nTotal: 400 kcal • 18g Protein • 50g Carbs • 14g Fat\nAdded to your daily log!"
-                val newMessages = _messages.updateAndGet { it + BushyAIMessage(text = fallbackText, isUser = false) }
-                persistMessages(newMessages)
             } finally {
                 _isGenerating.value = false
             }
         }
+    }
+
+    fun saveConfirmedMeal(
+        result: MealAnalysisResult,
+        onMealLogged: ((String, Int, Int, Int, Int) -> Unit)?
+    ) {
+        val totals = result.totalNutrients
+        onMealLogged?.invoke(
+            result.mealName,
+            totals.calories,
+            totals.proteinG.toInt(),
+            totals.carbsG.toInt(),
+            totals.fatG.toInt()
+        )
+
+        val newLoggedMeal = LoggedMeal(
+            id = UUID.randomUUID().toString(),
+            name = result.mealName,
+            calories = totals.calories,
+            proteinGrams = totals.proteinG.toInt(),
+            carbsGrams = totals.carbsG.toInt(),
+            fatGrams = totals.fatG.toInt(),
+            country = "India",
+            timestamp = System.currentTimeMillis()
+        )
+
+        val updatedLogged = _loggedMeals.updateAndGet { it + newLoggedMeal }
+        persistLoggedMeals(updatedLogged)
+
+        val breakdownText = StringBuilder().apply {
+            append("🍱 Meal Confirmed & Logged: ${result.mealName}\n\nConfirmed Items:\n")
+            result.items.forEach { item ->
+                val n = item.calculatedNutrients
+                append("• ${item.foodName} (${item.quantity} ${item.unit.displayName}): ${n.calories} kcal [${item.prepStyle.displayName}]\n")
+            }
+            append("─────────────────────────\n")
+            append("Total: ${totals.calories} kcal (${result.calorieRange.minCalories}-${result.calorieRange.maxCalories} range) • ${totals.proteinG}g Protein • ${totals.carbsG}g Carbs • ${totals.fatG}g Fat\nMethod: ${result.analysisMethod.displayName}")
+        }.toString()
+
+        val newMessages = _messages.updateAndGet { it + BushyAIMessage(text = breakdownText, isUser = false) }
+        persistMessages(newMessages)
+
+        clearActiveMealAnalysis()
+    }
+
+    fun clearActiveMealAnalysis() {
+        _activeMealAnalysisResult.value = null
+        _activeMealBitmap.value = null
     }
 
     override fun onCleared() {
@@ -253,7 +255,6 @@ class BushyAIViewModel(application: Application) : AndroidViewModel(application)
         fun tryParseTaskLocal(userText: String): TaskParseResult? {
             val lower = userText.trim().lowercase()
 
-            // Questions and conversational inquiries should be handled by the AI chat, not hijacked as task deployments
             val isQuestion = lower.endsWith("?") ||
                 Regex("""^(what|why|how|when|where|who|can|should|could|is|are|do you|tell me|explain)\b""").containsMatchIn(lower)
 
@@ -281,7 +282,6 @@ class BushyAIViewModel(application: Application) : AndroidViewModel(application)
             val title: String
 
             when {
-                // Steps / Walking / Running
                 lower.contains("step") || lower.contains("walk") || lower.contains("run") -> {
                     type = TaskType.STEPS
                     defaultTarget = 5000
@@ -290,7 +290,6 @@ class BushyAIViewModel(application: Application) : AndroidViewModel(application)
                     return TaskParseResult(title, target, type, "⚡ Mission deployed on-device: '$title'. Zero API tokens used!")
                 }
 
-                // Pushups
                 lower.contains("pushup") || lower.contains("push up") || lower.contains("push-up") -> {
                     type = TaskType.PUSHUPS
                     defaultTarget = 30
@@ -299,7 +298,6 @@ class BushyAIViewModel(application: Application) : AndroidViewModel(application)
                     return TaskParseResult(title, target, type, "⚡ Mission deployed on-device: '$title'. Zero API tokens used!")
                 }
 
-                // Pullups
                 lower.contains("pullup") || lower.contains("pull up") || lower.contains("pull-up") -> {
                     type = TaskType.GENERAL
                     defaultTarget = 10
@@ -308,7 +306,6 @@ class BushyAIViewModel(application: Application) : AndroidViewModel(application)
                     return TaskParseResult(title, target, type, "⚡ Mission deployed on-device: '$title'. Zero API tokens used!")
                 }
 
-                // Squats
                 lower.contains("squat") -> {
                     type = TaskType.GENERAL
                     defaultTarget = 30
@@ -317,7 +314,6 @@ class BushyAIViewModel(application: Application) : AndroidViewModel(application)
                     return TaskParseResult(title, target, type, "⚡ Mission deployed on-device: '$title'. Zero API tokens used!")
                 }
 
-                // Crunches / Situps
                 lower.contains("crunch") || lower.contains("situp") || lower.contains("sit up") -> {
                     type = TaskType.GENERAL
                     defaultTarget = 25
@@ -326,7 +322,6 @@ class BushyAIViewModel(application: Application) : AndroidViewModel(application)
                     return TaskParseResult(title, target, type, "⚡ Mission deployed on-device: '$title'. Zero API tokens used!")
                 }
 
-                // Jumping Jacks
                 lower.contains("jack") -> {
                     type = TaskType.GENERAL
                     defaultTarget = 50
@@ -335,7 +330,6 @@ class BushyAIViewModel(application: Application) : AndroidViewModel(application)
                     return TaskParseResult(title, target, type, "⚡ Mission deployed on-device: '$title'. Zero API tokens used!")
                 }
 
-                // Planks
                 lower.contains("plank") -> {
                     type = TaskType.GENERAL
                     defaultTarget = 60
@@ -344,7 +338,6 @@ class BushyAIViewModel(application: Application) : AndroidViewModel(application)
                     return TaskParseResult(title, target, type, "⚡ Mission deployed on-device: '$title'. Zero API tokens used!")
                 }
 
-                // Water / Hydration
                 lower.contains("water") || lower.contains("drink") || lower.contains("glass") -> {
                     type = TaskType.WATER
                     defaultTarget = 8
@@ -353,7 +346,6 @@ class BushyAIViewModel(application: Application) : AndroidViewModel(application)
                     return TaskParseResult(title, target, type, "⚡ Mission deployed on-device: '$title'. Zero API tokens used!")
                 }
 
-                // Custom tasks/missions (only if explicit command)
                 isExplicitTaskCommand -> {
                     type = TaskType.GENERAL
                     val target = detectedNumber ?: 10

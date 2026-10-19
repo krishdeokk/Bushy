@@ -66,6 +66,8 @@ fun BushyAIScreen(
     val isUserTyping by viewModel.isUserTyping.collectAsState()
     val selectedModel by viewModel.selectedModel.collectAsState()
     val downloadState by viewModel.downloadState.collectAsState()
+    val activeMealResult by viewModel.activeMealAnalysisResult.collectAsState()
+    val activeMealBitmap by viewModel.activeMealBitmap.collectAsState()
     
     val context = LocalContext.current
     var showCustomCamera by remember { mutableStateOf(false) }
@@ -89,6 +91,22 @@ fun BushyAIScreen(
                 e.printStackTrace()
             }
         }
+    }
+
+    if (activeMealResult != null) {
+        MealAnalysisScreen(
+            analysisResult = activeMealResult!!,
+            mealBitmap = activeMealBitmap,
+            onBack = { viewModel.clearActiveMealAnalysis() },
+            onRetakePhoto = {
+                viewModel.clearActiveMealAnalysis()
+                photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            },
+            onSaveMeal = { confirmedResult ->
+                viewModel.saveConfirmedMeal(confirmedResult, onMealLogged)
+            }
+        )
+        return
     }
     val currentExpression = when {
         isGenerating -> AvatarExpression.THINKING
