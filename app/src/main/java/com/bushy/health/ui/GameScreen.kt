@@ -596,75 +596,85 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
                         }
 
                         // Universal FAB Menu
-                        Box(contentAlignment = Alignment.BottomCenter) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .aspectRatio(1f),
+                            contentAlignment = Alignment.BottomCenter
+                        ) {
                             // The popup menu options
-                            androidx.compose.animation.AnimatedVisibility(
-                                visible = isFabMenuExpanded,
-                                enter = fadeIn(spring(stiffness = Spring.StiffnessMediumLow)) + scaleIn(initialScale = 0.8f, animationSpec = spring(dampingRatio = 0.6f, stiffness = 800f)),
-                                exit = fadeOut(spring(stiffness = Spring.StiffnessMediumLow)) + scaleOut(targetScale = 0.8f, animationSpec = spring(stiffness = Spring.StiffnessMediumLow)),
+                            Box(
                                 modifier = Modifier
-                                    .align(Alignment.TopCenter)
-                                    .offset(y = (-72).dp) // Exactly place the menu completely outside and above the box
+                                    .align(Alignment.TopEnd)
+                                    .requiredSize(0.dp)
+                                    .offset(y = (-24).dp, x = (-8).dp),
+                                contentAlignment = Alignment.BottomEnd
                             ) {
-                                Column(
-                                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                                    horizontalAlignment = Alignment.End,
+                                androidx.compose.animation.AnimatedVisibility(
+                                    visible = isFabMenuExpanded,
+                                    enter = fadeIn(spring(stiffness = Spring.StiffnessMediumLow)) + scaleIn(initialScale = 0.8f, animationSpec = spring(dampingRatio = 0.6f, stiffness = 800f)),
+                                    exit = fadeOut(spring(stiffness = Spring.StiffnessMediumLow)) + scaleOut(targetScale = 0.8f, animationSpec = spring(stiffness = Spring.StiffnessMediumLow))
                                 ) {
-                                    // Bushy AI Option
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically, 
-                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                    Column(
+                                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                                        horizontalAlignment = Alignment.End,
                                     ) {
-                                        Surface(
-                                            shape = RoundedCornerShape(8.dp), 
-                                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                            shadowElevation = 2.dp
+                                        // Bushy AI Option
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically, 
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                                         ) {
-                                            Text(
-                                                "Bushy AI", 
-                                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp), 
-                                                style = MaterialTheme.typography.labelLarge
-                                            )
+                                            Surface(
+                                                shape = RoundedCornerShape(8.dp), 
+                                                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                                shadowElevation = 2.dp
+                                            ) {
+                                                Text(
+                                                    "Bushy AI", 
+                                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp), 
+                                                    style = MaterialTheme.typography.labelLarge
+                                                )
+                                            }
+                                            SmallFloatingActionButton(
+                                                onClick = { 
+                                                    isFabMenuExpanded = false
+                                                    onPillClick(2)
+                                                },
+                                                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                                contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                                                shape = CircleShape
+                                            ) {
+                                                Icon(Icons.Rounded.Cloud, contentDescription = "Bushy AI")
+                                            }
                                         }
-                                        SmallFloatingActionButton(
-                                            onClick = { 
-                                                isFabMenuExpanded = false
-                                                onPillClick(2)
-                                            },
-                                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                                            shape = CircleShape
+                                        
+                                        // Add Mission Option
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically, 
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                                         ) {
-                                            Icon(Icons.Rounded.Cloud, contentDescription = "Bushy AI")
-                                        }
-                                    }
-                                    
-                                    // Add Mission Option
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically, 
-                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                    ) {
-                                        Surface(
-                                            shape = RoundedCornerShape(8.dp), 
-                                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                            shadowElevation = 2.dp
-                                        ) {
-                                            Text(
-                                                "Add Mission", 
-                                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp), 
-                                                style = MaterialTheme.typography.labelLarge
-                                            )
-                                        }
-                                        SmallFloatingActionButton(
-                                            onClick = {
-                                                isFabMenuExpanded = false
-                                                showAddTaskDialog = true
-                                            },
-                                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                                            shape = CircleShape
-                                        ) {
-                                            Icon(Icons.AutoMirrored.Rounded.Assignment, contentDescription = "Add Mission")
+                                            Surface(
+                                                shape = RoundedCornerShape(8.dp), 
+                                                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                                shadowElevation = 2.dp
+                                            ) {
+                                                Text(
+                                                    "Add Mission", 
+                                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp), 
+                                                    style = MaterialTheme.typography.labelLarge
+                                                )
+                                            }
+                                            SmallFloatingActionButton(
+                                                onClick = {
+                                                    isFabMenuExpanded = false
+                                                    showAddTaskDialog = true
+                                                },
+                                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                                shape = CircleShape
+                                            ) {
+                                                Icon(Icons.AutoMirrored.Rounded.Assignment, contentDescription = "Add Mission")
+                                            }
                                         }
                                     }
                                 }
@@ -702,7 +712,7 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
                                         MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)
                                 ),
                                 modifier = Modifier
-                                    .height(64.dp)
+                                    .fillMaxHeight()
                                     .aspectRatio(1f),
                                 shadowElevation = 0.dp,
                                 tonalElevation = 0.dp
