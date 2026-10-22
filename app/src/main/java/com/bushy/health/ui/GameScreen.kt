@@ -607,7 +607,7 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
                                 modifier = Modifier
                                     .align(Alignment.TopEnd)
                                     .requiredSize(0.dp)
-                                    .offset(y = (-24).dp, x = (-8).dp),
+                                    .offset(y = (-8).dp, x = (-48).dp), // Adjust X offset to pull menu fully onscreen
                                 contentAlignment = Alignment.BottomEnd
                             ) {
                                 androidx.compose.animation.AnimatedVisibility(
