@@ -215,8 +215,7 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
                             onTaskTap = { viewModel.singleTapIncrement(it) },
                             onTaskReset = { viewModel.resetTask(it) },
                             onTaskDelete = { viewModel.deleteTask(it) },
-                            onMealDelete = { viewModel.deleteMeal(it) },
-                            onAddTask = { showAddTaskDialog = true }
+                            onMealDelete = { viewModel.deleteMeal(it) }
                         )
                     } else {
                         // Bushy Wushy AI Tab
@@ -479,6 +478,27 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
             )
 
             var pillDragAmount by remember { mutableFloatStateOf(0f) }
+            var isFabMenuExpanded by remember { mutableStateOf(false) }
+
+            LaunchedEffect(pagerState.currentPage) {
+                isFabMenuExpanded = false
+            }
+
+            // Universal FAB Menu Overlay to capture outside clicks
+            androidx.compose.animation.AnimatedVisibility(
+                visible = isFabMenuExpanded,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.3f))
+                        .pointerInput(Unit) {
+                            detectTapGestures { isFabMenuExpanded = false }
+                        }
+                )
+            }
 
             Box(
                 modifier = Modifier
@@ -487,7 +507,7 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
                     .padding(bottom = 28.dp),
                 contentAlignment = Alignment.BottomCenter
             ) {
-                AnimatedVisibility(
+                androidx.compose.animation.AnimatedVisibility(
                     visible = !isKeyboardVisible && !isBushyAITab,
                     enter = fadeIn(spring(stiffness = Spring.StiffnessMediumLow)) + scaleIn(spring(dampingRatio = 0.8f, stiffness = Spring.StiffnessMediumLow)),
                     exit = fadeOut(spring(stiffness = Spring.StiffnessMediumLow)) + scaleOut(spring(stiffness = Spring.StiffnessMediumLow))
@@ -575,44 +595,130 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
                             }
                         }
 
-                        // Bushy AI Separated FAB
-                        val aiSelected = pagerState.currentPage == 2
-                        val aiBgColor by animateColorAsState(
-                            targetValue = if (aiSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
-                            animationSpec = spring(dampingRatio = 0.7f, stiffness = 800f)
-                        )
-                        val aiContentColor by animateColorAsState(
-                            targetValue = if (aiSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
-                            animationSpec = spring(dampingRatio = 0.7f, stiffness = 800f)
-                        )
+                        // Universal FAB Menu
+                        Box(contentAlignment = Alignment.BottomCenter) {
+                            Box(modifier = Modifier.requiredSize(0.dp), contentAlignment = Alignment.BottomEnd) {
+                                androidx.compose.animation.AnimatedVisibility(
+                                    visible = isFabMenuExpanded,
+                                    enter = fadeIn(spring(stiffness = Spring.StiffnessMediumLow)) + scaleIn(initialScale = 0.8f, animationSpec = spring(dampingRatio = 0.6f, stiffness = 800f)),
+                                    exit = fadeOut(spring(stiffness = Spring.StiffnessMediumLow)) + scaleOut(targetScale = 0.8f, animationSpec = spring(stiffness = Spring.StiffnessMediumLow)),
+                                    modifier = Modifier.offset(y = (-56).dp)
+                                ) {
+                                    Column(
+                                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                                        horizontalAlignment = Alignment.End,
+                                        modifier = Modifier.padding(bottom = 8.dp)
+                                    ) {
+                                        // Bushy AI Option
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically, 
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                        ) {
+                                            Surface(
+                                                shape = RoundedCornerShape(8.dp), 
+                                                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                                shadowElevation = 2.dp
+                                            ) {
+                                                Text(
+                                                    "Bushy AI", 
+                                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp), 
+                                                    style = MaterialTheme.typography.labelLarge
+                                                )
+                                            }
+                                            SmallFloatingActionButton(
+                                                onClick = { 
+                                                    isFabMenuExpanded = false
+                                                    onPillClick(2)
+                                                },
+                                                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                                contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                                                shape = CircleShape
+                                            ) {
+                                                Icon(Icons.Rounded.Cloud, contentDescription = "Bushy AI")
+                                            }
+                                        }
+                                        
+                                        // Add Mission Option
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically, 
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                        ) {
+                                            Surface(
+                                                shape = RoundedCornerShape(8.dp), 
+                                                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                                shadowElevation = 2.dp
+                                            ) {
+                                                Text(
+                                                    "Add Mission", 
+                                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp), 
+                                                    style = MaterialTheme.typography.labelLarge
+                                                )
+                                            }
+                                            SmallFloatingActionButton(
+                                                onClick = {
+                                                    isFabMenuExpanded = false
+                                                    showAddTaskDialog = true
+                                                },
+                                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                                shape = CircleShape
+                                            ) {
+                                                Icon(Icons.AutoMirrored.Rounded.Assignment, contentDescription = "Add Mission")
+                                            }
+                                        }
+                                    }
+                                }
+                            }
 
-                        Surface(
-                            onClick = { onPillClick(2) },
-                            color = aiBgColor,
-                            contentColor = aiContentColor,
-                            shape = RoundedCornerShape(24.dp), // Squircle shape like the image
-                            border = BorderStroke(
-                                width = 2.dp,
-                                color = if (uiState.visualStyle == VisualStyle.MONOCHROME) 
-                                    MaterialTheme.colorScheme.onBackground
-                                else 
-                                    MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)
-                            ),
-                            modifier = Modifier
-                                .fillMaxHeight()
-                                .aspectRatio(1f),
-                            shadowElevation = 0.dp,
-                            tonalElevation = 0.dp
-                        ) {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
+                            // Main FAB Squircle
+                            val fabRotation by animateFloatAsState(
+                                targetValue = if (isFabMenuExpanded) 45f else 0f,
+                                animationSpec = spring(dampingRatio = 0.6f, stiffness = 800f)
+                            )
+                            
+                            val aiSelected = pagerState.currentPage == 2 && !isFabMenuExpanded
+                            val fabBgColor by animateColorAsState(
+                                targetValue = if (isFabMenuExpanded || aiSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+                                animationSpec = spring(dampingRatio = 0.7f, stiffness = 800f)
+                            )
+                            val fabContentColor by animateColorAsState(
+                                targetValue = if (isFabMenuExpanded || aiSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                                animationSpec = spring(dampingRatio = 0.7f, stiffness = 800f)
+                            )
+
+                            Surface(
+                                onClick = { 
+                                    isFabMenuExpanded = !isFabMenuExpanded 
+                                    performSubtleClick()
+                                },
+                                color = fabBgColor,
+                                contentColor = fabContentColor,
+                                shape = RoundedCornerShape(24.dp), // Squircle shape like the image
+                                border = BorderStroke(
+                                    width = 2.dp,
+                                    color = if (uiState.visualStyle == VisualStyle.MONOCHROME) 
+                                        MaterialTheme.colorScheme.onBackground
+                                    else 
+                                        MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)
+                                ),
+                                modifier = Modifier
+                                    .fillMaxHeight()
+                                    .aspectRatio(1f),
+                                shadowElevation = 0.dp,
+                                tonalElevation = 0.dp
                             ) {
-                                Icon(
-                                    Icons.Rounded.Cloud, 
-                                    contentDescription = "Bushy AI",
-                                    modifier = Modifier.size(32.dp)
-                                )
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        Icons.Rounded.Add, 
+                                        contentDescription = "Universal Action",
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .graphicsLayer { rotationZ = fabRotation }
+                                    )
+                                }
                             }
                         }
                     }
@@ -1017,8 +1123,7 @@ fun TasksScreen(
     onTaskTap: (String) -> Unit,
     onTaskReset: (String) -> Unit, 
     onTaskDelete: (String) -> Unit,
-    onMealDelete: (String) -> Unit,
-    onAddTask: () -> Unit
+    onMealDelete: (String) -> Unit
 ) {
     var selectedFilter by remember { mutableIntStateOf(0) } // 0: All, 1: Active, 2: Done
     var selectedTab by remember { mutableIntStateOf(0) } // 0: Missions, 1: Meals
@@ -1146,22 +1251,6 @@ fun TasksScreen(
                         }
                     }
                 }
-            }
-        }
-
-        // MEGA ADD BUTTON
-        if (selectedTab == 0) {
-            LargeFloatingActionButton(
-                onClick = onAddTask,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(bottom = 156.dp, end = 24.dp)
-                    .size(92.dp),
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                shape = MaterialExpressiveShapes.cookie9
-            ) {
-                Icon(Icons.Rounded.Add, "Add Mission", modifier = Modifier.size(48.dp))
             }
         }
     }
@@ -1295,7 +1384,7 @@ fun PillTabItem(
             horizontalArrangement = Arrangement.Center
         ) {
             Icon(icon, contentDescription = label, modifier = Modifier.size(28.dp))
-            AnimatedVisibility(visible = selected) {
+            androidx.compose.animation.AnimatedVisibility(visible = selected) {
                 Text(
                     text = label,
                     modifier = Modifier.padding(start = 12.dp),
