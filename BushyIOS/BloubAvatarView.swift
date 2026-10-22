@@ -14,7 +14,7 @@ public struct BloubAvatarView: View {
     
     public init(
         expression: AvatarExpression = .neutral,
-        visualStyle: VisualStyle = .material3,
+        visualStyle: VisualStyle = .monochrome,
         themeMode: ThemeMode = .system,
         touchGaze: HeadGaze? = nil,
         onTap: (() -> Void)? = nil,
@@ -45,31 +45,17 @@ public struct BloubAvatarView: View {
                     targetTouchGaze: activeGaze
                 )
                 
-                // Draw Body
-                if visualStyle == .monochrome {
-                    // Monochrome clean minimal style
-                    context.fill(frame.bodyPath, with: .color(Color.primary.opacity(0.08)))
-                    context.stroke(frame.bodyPath, with: .color(Color.primary), style: StrokeStyle(lineWidth: 4.5, lineCap: .round, lineJoin: .round))
-                } else {
-                    // Vibrant Expressive Material 3 style
-                    let gradient = Gradient(colors: [
-                        Color(red: 0.35, green: 0.70, blue: 0.98),
-                        Color(red: 0.45, green: 0.50, blue: 0.98),
-                        Color(red: 0.65, green: 0.40, blue: 0.95)
-                    ])
-                    let rect = CGRect(origin: .zero, size: size)
-                    context.fill(frame.bodyPath, with: .linearGradient(gradient, startPoint: CGPoint(x: rect.midX, y: rect.minY), endPoint: CGPoint(x: rect.midX, y: rect.maxY)))
-                    context.stroke(frame.bodyPath, with: .color(Color.white.opacity(0.35)), style: StrokeStyle(lineWidth: 3.0))
-                }
+                // Draw Body: Pure Minimalist Monochrome
+                context.fill(frame.bodyPath, with: .color(Color.primary.opacity(0.08)))
+                context.stroke(
+                    frame.bodyPath,
+                    with: .color(Color.primary),
+                    style: StrokeStyle(lineWidth: 4.5, lineCap: .round, lineJoin: .round)
+                )
                 
-                // Draw Eyes
+                // Draw Eyes: Pure Minimalist Monochrome
                 for eye in frame.eyes {
-                    if visualStyle == .monochrome {
-                        context.fill(eye.path, with: .color(Color.primary.opacity(Double(frame.eyeAlpha))))
-                    } else {
-                        context.fill(eye.path, with: .color(Color.white.opacity(Double(frame.eyeAlpha))))
-                        context.stroke(eye.path, with: .color(Color.black.opacity(0.15)), style: StrokeStyle(lineWidth: 1.0))
-                    }
+                    context.fill(eye.path, with: .color(Color.primary.opacity(Double(frame.eyeAlpha))))
                 }
             }
         }

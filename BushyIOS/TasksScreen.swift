@@ -5,14 +5,10 @@ public struct TasksScreen: View {
     var onAddQuest: () -> Void
     var onScanMeal: () -> Void
     
-    private var isMono: Bool {
-        viewModel.uiState.visualStyle == .monochrome
-    }
-    
     public var body: some View {
         ZStack {
-            // Ambient Liquid Background
-            LiquidFluidBackground(isMonochrome: isMono)
+            // Ambient Liquid Background (Pure Monochrome)
+            LiquidFluidBackground(isMonochrome: true)
             
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 24) {
@@ -30,14 +26,14 @@ public struct TasksScreen: View {
                         Button(action: onAddQuest) {
                             Image(systemName: "plus")
                                 .font(.system(size: 16, weight: .bold))
-                                .foregroundColor(isMono ? Color.bushyAppBackground : .white)
+                                .foregroundColor(Color.bushyAppBackground)
                                 .frame(width: 44, height: 44)
-                                .background(isMono ? Color.primary : Color.accentColor)
+                                .background(Color.primary)
                                 .clipShape(Circle())
                                 .overlay(
                                     Circle().stroke(Color.white.opacity(0.35), lineWidth: 1.2)
                                 )
-                                .shadow(color: isMono ? Color.black.opacity(0.2) : Color.accentColor.opacity(0.35), radius: 8, x: 0, y: 4)
+                                .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
                         }
                     }
                     
@@ -69,7 +65,7 @@ public struct TasksScreen: View {
             HStack(spacing: 14) {
                 Image(systemName: task.type.iconName)
                     .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(task.isCompleted ? (isMono ? .primary : .green) : (isMono ? .primary : .accentColor))
+                    .foregroundColor(.primary)
                     .frame(width: 44, height: 44)
                     .liquidGlassCircle()
                 
@@ -88,11 +84,11 @@ public struct TasksScreen: View {
                 if task.isCompleted {
                     HStack(spacing: 4) {
                         Image(systemName: "checkmark.seal.fill")
-                            .foregroundColor(isMono ? .primary : .green)
+                            .foregroundColor(.primary)
                         Text("+500 XP")
                             .font(.caption)
                             .fontWeight(.bold)
-                            .foregroundColor(isMono ? .primary : .green)
+                            .foregroundColor(.primary)
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
@@ -107,15 +103,15 @@ public struct TasksScreen: View {
                             Text("1")
                         }
                         .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(isMono ? Color.bushyAppBackground : .white)
+                        .foregroundColor(Color.bushyAppBackground)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 8)
-                        .background(isMono ? Color.primary : Color.accentColor)
+                        .background(Color.primary)
                         .clipShape(Capsule())
                         .overlay(
                             Capsule().stroke(Color.white.opacity(0.35), lineWidth: 1)
                         )
-                        .shadow(color: isMono ? Color.clear : Color.accentColor.opacity(0.35), radius: 6, x: 0, y: 3)
+                        .shadow(color: Color.clear, radius: 6, x: 0, y: 3)
                     }
                 }
             }
@@ -128,17 +124,7 @@ public struct TasksScreen: View {
                         .frame(height: 6)
                     
                     Capsule()
-                        .fill(
-                            task.isCompleted ?
-                            (isMono ? AnyShapeStyle(Color.primary) : AnyShapeStyle(Color.green)) :
-                            (isMono ? AnyShapeStyle(Color.primary) : AnyShapeStyle(
-                                LinearGradient(
-                                    colors: [Color.accentColor, Color.purple],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            ))
-                        )
+                        .fill(Color.primary)
                         .frame(width: max(0, geo.size.width * CGFloat(task.progress)), height: 6)
                 }
             }
@@ -183,7 +169,7 @@ public struct TasksScreen: View {
                     Text("Log Meal")
                         .font(.subheadline)
                         .fontWeight(.bold)
-                        .foregroundColor(isMono ? .primary : .accentColor)
+                        .foregroundColor(.primary)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
                         .liquidGlassPill()
@@ -191,15 +177,15 @@ public struct TasksScreen: View {
             }
             
             HStack(spacing: 12) {
-                macroCard(label: "Protein", amount: "\(viewModel.uiState.totalProteinGrams)g", target: "120g", color: .purple)
-                macroCard(label: "Carbs", amount: "\(viewModel.uiState.totalCarbsGrams)g", target: "200g", color: .orange)
-                macroCard(label: "Fats", amount: "\(viewModel.uiState.totalFatGrams)g", target: "60g", color: .blue)
+                macroCard(label: "Protein", amount: "\(viewModel.uiState.totalProteinGrams)g", target: "120g")
+                macroCard(label: "Carbs", amount: "\(viewModel.uiState.totalCarbsGrams)g", target: "200g")
+                macroCard(label: "Fats", amount: "\(viewModel.uiState.totalFatGrams)g", target: "60g")
             }
         }
         .padding(.top, 8)
     }
     
-    private func macroCard(label: String, amount: String, target: String, color: Color) -> some View {
+    private func macroCard(label: String, amount: String, target: String) -> some View {
         VStack(spacing: 6) {
             Text(label)
                 .font(.caption)
@@ -208,7 +194,7 @@ public struct TasksScreen: View {
             
             Text(amount)
                 .font(.system(size: 20, weight: .black, design: .rounded))
-                .foregroundColor(isMono ? .primary : color)
+                .foregroundColor(.primary)
             
             Text("Goal: \(target)")
                 .font(.caption2)

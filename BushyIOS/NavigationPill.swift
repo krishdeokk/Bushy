@@ -2,17 +2,13 @@ import SwiftUI
 
 public struct NavigationPill: View {
     @Binding var selectedTab: Int
-    var visualStyle: VisualStyle
+    var visualStyle: VisualStyle = .monochrome
     var onAddQuest: () -> Void
     var onScanMeal: () -> Void
     var onShareStory: () -> Void
     
     @State private var isMenuExpanded = false
     @State private var isTappedPulse = false
-    
-    private var isMono: Bool {
-        visualStyle == .monochrome
-    }
     
     public var body: some View {
         ZStack(alignment: .bottom) {
@@ -28,15 +24,15 @@ public struct NavigationPill: View {
                     }
                 
                 VStack(spacing: 12) {
-                    quickActionButton(icon: "camera.fill", title: "Scan Food / Meal", color: .orange) {
+                    quickActionButton(icon: "camera.fill", title: "Scan Food / Meal") {
                         withAnimation { isMenuExpanded = false }
                         onScanMeal()
                     }
-                    quickActionButton(icon: "plus.circle.fill", title: "Add New Quest", color: .blue) {
+                    quickActionButton(icon: "plus.circle.fill", title: "Add New Quest") {
                         withAnimation { isMenuExpanded = false }
                         onAddQuest()
                     }
-                    quickActionButton(icon: "square.and.arrow.up.fill", title: "Share Story Card", color: .purple) {
+                    quickActionButton(icon: "square.and.arrow.up.fill", title: "Share Story Card") {
                         withAnimation { isMenuExpanded = false }
                         onShareStory()
                     }
@@ -66,17 +62,7 @@ public struct NavigationPill: View {
                 } label: {
                     ZStack {
                         Circle()
-                            .fill(
-                                isMono ?
-                                AnyShapeStyle(Color.primary) :
-                                AnyShapeStyle(
-                                    LinearGradient(
-                                        colors: [Color.accentColor, Color.purple],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                            )
+                            .fill(Color.primary)
                         
                         Circle()
                             .stroke(
@@ -90,11 +76,11 @@ public struct NavigationPill: View {
                         
                         Image(systemName: isMenuExpanded ? "xmark" : "plus")
                             .font(.system(size: 20, weight: .bold))
-                            .foregroundColor(isMono ? Color.bushyAppBackground : .white)
+                            .foregroundColor(Color.bushyAppBackground)
                             .rotationEffect(.degrees(isMenuExpanded ? 90 : 0))
                     }
                     .frame(width: 52, height: 52)
-                    .shadow(color: isMono ? Color.black.opacity(0.2) : Color.accentColor.opacity(0.35), radius: 10, x: 0, y: 5)
+                    .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 5)
                 }
             }
             .scaleEffect(isTappedPulse ? 1.06 : 1.0)
@@ -123,48 +109,40 @@ public struct NavigationPill: View {
                 }
             }
             .foregroundColor(
-                isSelected ?
-                    (isMono ? Color.bushyAppBackground : .white) :
-                    .primary.opacity(0.85)
+                isSelected ? Color.bushyAppBackground : .primary.opacity(0.85)
             )
             .padding(.horizontal, isSelected ? 16 : 12)
             .padding(.vertical, 10)
             .background(
                 Capsule()
-                    .fill(
-                        isSelected ?
-                        (isMono ? AnyShapeStyle(Color.primary) : AnyShapeStyle(
-                            LinearGradient(
-                                colors: [Color.accentColor, Color.purple.opacity(0.85)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )) :
-                        AnyShapeStyle(Color.clear)
-                    )
+                    .fill(isSelected ? Color.primary : Color.clear)
             )
             .overlay(
                 Capsule()
-                    .stroke(isSelected ? (isMono ? Color.primary.opacity(0.2) : Color.white.opacity(0.35)) : Color.clear, lineWidth: 1)
+                    .stroke(isSelected ? Color.primary.opacity(0.2) : Color.clear, lineWidth: 1)
             )
         }
     }
     
-    private func quickActionButton(icon: String, title: String, color: Color, action: @escaping () -> Void) -> some View {
+    private func quickActionButton(icon: String, title: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 12) {
                 Image(systemName: icon)
                     .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(isMono ? .primary : color)
+                    .foregroundColor(.primary)
                     .frame(width: 32)
                 Text(title)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.subheadline)
+                    .fontWeight(.bold)
                     .foregroundColor(.primary)
                 Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, 20)
             .padding(.vertical, 14)
-            .frame(width: 230)
+            .frame(width: 260)
             .liquidGlassCard(cornerRadius: 18)
         }
     }

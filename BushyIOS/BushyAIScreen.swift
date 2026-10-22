@@ -8,14 +8,10 @@ public struct BushyAIScreen: View {
     @State private var inputText: String = ""
     @FocusState private var isInputFocused: Bool
     
-    private var isMono: Bool {
-        gameViewModel.uiState.visualStyle == .monochrome
-    }
-    
     public var body: some View {
         ZStack {
-            // Ambient Liquid Background
-            LiquidFluidBackground(isMonochrome: isMono)
+            // Ambient Liquid Background (Pure Monochrome)
+            LiquidFluidBackground(isMonochrome: true)
             
             VStack(spacing: 0) {
                 // Frosted Liquid Header Bar
@@ -62,7 +58,7 @@ public struct BushyAIScreen: View {
         HStack(spacing: 12) {
             BloubAvatarView(
                 expression: .happy,
-                visualStyle: gameViewModel.uiState.visualStyle,
+                visualStyle: .monochrome,
                 themeMode: gameViewModel.uiState.themeMode
             )
             .frame(width: 44, height: 44)
@@ -78,7 +74,7 @@ public struct BushyAIScreen: View {
                         .padding(.horizontal, 8)
                         .padding(.vertical, 3)
                         .liquidGlassPill()
-                        .foregroundColor(isMono ? .primary : .green)
+                        .foregroundColor(.primary)
                 }
                 
                 Text("Your gamified fitness & Indian diet mentor")
@@ -106,25 +102,19 @@ public struct BushyAIScreen: View {
             if msg.isUser {
                 Spacer(minLength: 40)
             } else {
-                BloubAvatarView(expression: .attentive, visualStyle: gameViewModel.uiState.visualStyle)
+                BloubAvatarView(expression: .attentive, visualStyle: .monochrome)
                     .frame(width: 32, height: 32)
             }
             
             VStack(alignment: msg.isUser ? .trailing : .leading, spacing: 4) {
                 Text(msg.text)
                     .font(.system(size: 15))
-                    .foregroundColor(msg.isUser ? (isMono ? Color.bushyAppBackground : .white) : .primary)
+                    .foregroundColor(msg.isUser ? Color.bushyAppBackground : .primary)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 12)
                     .background(
                         msg.isUser ?
-                        (isMono ? AnyShapeStyle(Color.primary) : AnyShapeStyle(
-                            LinearGradient(
-                                colors: [Color.accentColor, Color.purple],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )) :
+                        AnyShapeStyle(Color.primary) :
                         AnyShapeStyle(.ultraThinMaterial)
                     )
                     .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
@@ -144,7 +134,7 @@ public struct BushyAIScreen: View {
     
     private var typingIndicator: some View {
         HStack(spacing: 8) {
-            BloubAvatarView(expression: .thinking, visualStyle: gameViewModel.uiState.visualStyle)
+            BloubAvatarView(expression: .thinking, visualStyle: .monochrome)
                 .frame(width: 32, height: 32)
             
             HStack(spacing: 4) {
@@ -217,22 +207,16 @@ public struct BushyAIScreen: View {
                 Button(action: sendCurrentText) {
                     Image(systemName: "arrow.up")
                         .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(isMono ? Color.bushyAppBackground : .white)
+                        .foregroundColor(Color.bushyAppBackground)
                         .frame(width: 44, height: 44)
                         .background(
                             inputText.isEmpty ?
                             AnyShapeStyle(Color.secondary.opacity(0.3)) :
-                            (isMono ? AnyShapeStyle(Color.primary) : AnyShapeStyle(
-                                LinearGradient(
-                                    colors: [Color.accentColor, Color.purple],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            ))
+                            AnyShapeStyle(Color.primary)
                         )
                         .clipShape(Circle())
                         .overlay(Circle().stroke(Color.white.opacity(0.3), lineWidth: 1))
-                        .shadow(color: inputText.isEmpty ? Color.clear : (isMono ? Color.black.opacity(0.2) : Color.accentColor.opacity(0.35)), radius: 8, x: 0, y: 4)
+                        .shadow(color: inputText.isEmpty ? Color.clear : Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
                 }
                 .disabled(inputText.isEmpty)
             }

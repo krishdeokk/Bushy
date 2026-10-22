@@ -11,14 +11,10 @@ public struct MealAnalysisView: View {
     @State private var selectedPrepStyle: PrepStyle = .standard
     @State private var currentItem: EditableFoodItem? = nil
     
-    private var isMono: Bool {
-        gameViewModel.uiState.visualStyle == .monochrome
-    }
-    
     public var body: some View {
         NavigationStack {
             ZStack {
-                LiquidFluidBackground(isMonochrome: isMono)
+                LiquidFluidBackground(isMonochrome: true)
                 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 20) {
@@ -137,7 +133,7 @@ public struct MealAnalysisView: View {
                 Text("\(Int(item.confidenceScore * 100))% Match")
                     .font(.caption2)
                     .fontWeight(.bold)
-                    .foregroundColor(isMono ? .primary : .green)
+                    .foregroundColor(.primary)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
                     .liquidGlassPill()
@@ -186,7 +182,7 @@ public struct MealAnalysisView: View {
                         } label: {
                             Image(systemName: "plus.circle.fill")
                                 .font(.title3)
-                                .foregroundColor(isMono ? .primary : .accentColor)
+                                .foregroundColor(.primary)
                         }
                     }
                 }
@@ -232,13 +228,13 @@ public struct MealAnalysisView: View {
                     Text("\(nutrients.calories) kcal")
                         .font(.title2)
                         .fontWeight(.black)
-                        .foregroundColor(isMono ? .primary : .accentColor)
+                        .foregroundColor(.primary)
                 }
                 
                 HStack(spacing: 8) {
-                    macroBadge(label: "Protein", val: "\(nutrients.proteinG)g", color: .purple)
-                    macroBadge(label: "Carbs", val: "\(nutrients.carbsG)g", color: .orange)
-                    macroBadge(label: "Fats", val: "\(nutrients.fatG)g", color: .blue)
+                    macroBadge(label: "Protein", val: "\(nutrients.proteinG)g")
+                    macroBadge(label: "Carbs", val: "\(nutrients.carbsG)g")
+                    macroBadge(label: "Fats", val: "\(nutrients.fatG)g")
                 }
             }
             .padding(14)
@@ -269,23 +265,13 @@ public struct MealAnalysisView: View {
                     Text("Log to Bushy Diary (+50 XP)")
                         .fontWeight(.bold)
                 }
-                .foregroundColor(isMono ? (gameViewModel.uiState.themeMode == .dark ? .black : .white) : .white)
+                .foregroundColor(Color.bushyAppBackground)
                 .frame(maxWidth: .infinity)
                 .frame(height: 52)
-                .background(
-                    isMono ?
-                    AnyShapeStyle(Color.primary) :
-                    AnyShapeStyle(
-                        LinearGradient(
-                            colors: [Color.accentColor, Color.purple],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                )
+                .background(Color.primary)
                 .clipShape(Capsule())
                 .overlay(Capsule().stroke(Color.white.opacity(0.3), lineWidth: 1))
-                .shadow(color: isMono ? Color.black.opacity(0.15) : Color.accentColor.opacity(0.35), radius: 8, x: 0, y: 4)
+                .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
             }
             .padding(.top, 4)
         }
@@ -293,60 +279,33 @@ public struct MealAnalysisView: View {
         .liquidGlassCard(cornerRadius: 24)
     }
     
-    private func macroBadge(label: String, val: String, color: Color) -> some View {
+    private func macroBadge(label: String, val: String) -> some View {
         VStack(spacing: 4) {
             Text(label)
                 .font(.caption2)
                 .fontWeight(.bold)
                 .foregroundColor(.secondary)
+            
             Text(val)
-                .font(.subheadline)
+                .font(.headline)
                 .fontWeight(.black)
-                .foregroundColor(isMono ? .primary : color)
+                .foregroundColor(.primary)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 8)
-        .liquidGlassCard(cornerRadius: 14)
+        .background(Color.secondary.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
     
     private func analyzeDish() {
-        guard !inputText.isEmpty else { return }
-        let interp = MultilingualDishInterpreter.interpretDishText(inputText)
-        if let match = interp.bestMatch {
-            self.selectedUnit = match.defaultUnit
-            self.quantity = 1.0
-            self.selectedPrepStyle = .standard
-            self.currentItem = EditableFoodItem(
-                foodName: match.name,
-                confidenceScore: interp.confidenceScore,
-                quantity: 1.0,
-                unit: match.defaultUnit,
-                prepStyle: .standard,
-                caloriesPer100g: match.caloriesPer100g,
-                proteinPer100g: match.proteinPer100g,
-                carbsPer100g: match.carbsPer100g,
-                fatPer100g: match.fatPer100g,
-                preparationNote: match.prepNotes,
-                originalUserText: inputText
-            )
-        } else {
-            self.selectedUnit = .katori
-            self.quantity = 1.0
-            self.selectedPrepStyle = .standard
-            self.currentItem = EditableFoodItem(
-                foodName: inputText.capitalized,
-                confidenceScore: 0.65,
-                quantity: 1.0,
-                unit: .katori,
-                prepStyle: .standard,
-                caloriesPer100g: 150,
-                proteinPer100g: 4.5,
-                carbsPer100g: 22.0,
-                fatPer100g: 5.0,
-                preparationNote: "Estimated standard Indian dish profile",
-                originalUserText: inputText
-            )
-        }
+        let trimmed = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        
+        let item = MultilingualDishInterpreter.interpret(userInput: trimmed)
+        self.currentItem = item
+        self.selectedUnit = item.unit
+        self.quantity = item.quantity
+        self.selectedPrepStyle = item.prepStyle
     }
     
     private func updateItem() {

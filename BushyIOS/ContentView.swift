@@ -11,8 +11,7 @@ struct ContentView: View {
                 GameScreen(viewModel: viewModel)
             }
         }
-        .tint(viewModel.uiState.visualStyle == .monochrome ? .primary : Color.accentColor)
-        .grayscale(viewModel.uiState.visualStyle == .monochrome ? 1.0 : 0.0)
+        .tint(.primary)
         .preferredColorScheme(colorScheme)
     }
     

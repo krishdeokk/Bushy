@@ -6,14 +6,10 @@ public struct HomeScreen: View {
     var onShare: () -> Void
     var onSwitchHero: () -> Void
     
-    private var isMono: Bool {
-        viewModel.uiState.visualStyle == .monochrome
-    }
-    
     public var body: some View {
         ZStack {
-            // Ambient Liquid Fluid Background
-            LiquidFluidBackground(isMonochrome: isMono)
+            // Ambient Liquid Fluid Background (Monochrome Grayscale)
+            LiquidFluidBackground(isMonochrome: true)
             
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 22) {
@@ -60,12 +56,6 @@ public struct HomeScreen: View {
                 Divider()
                 
                 Button {
-                    viewModel.setVisualStyle(viewModel.uiState.visualStyle == .material3 ? .monochrome : .material3)
-                } label: {
-                    Label(viewModel.uiState.visualStyle == .material3 ? "Switch to Monochrome" : "Switch to Vibrant M3", systemImage: "paintbrush.fill")
-                }
-                
-                Button {
                     let next: ThemeMode = (viewModel.uiState.themeMode == .light) ? .dark : ((viewModel.uiState.themeMode == .dark) ? .system : .light)
                     viewModel.setThemeMode(next)
                 } label: {
@@ -92,7 +82,7 @@ public struct HomeScreen: View {
             // Streak Flame Badge
             HStack(spacing: 6) {
                 Image(systemName: "flame.fill")
-                    .foregroundColor(isMono ? .primary : .orange)
+                    .foregroundColor(.primary)
                 Text("\(viewModel.uiState.streakDays) Days")
                     .font(.subheadline)
                     .fontWeight(.bold)
@@ -105,7 +95,7 @@ public struct HomeScreen: View {
             Text("LVL \(viewModel.uiState.level)")
                 .font(.subheadline)
                 .fontWeight(.black)
-                .foregroundColor(isMono ? .primary : .accentColor)
+                .foregroundColor(.primary)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)
                 .liquidGlassPill()
@@ -144,19 +134,8 @@ public struct HomeScreen: View {
                         .frame(height: 8)
                     
                     Capsule()
-                        .fill(
-                            isMono ?
-                            AnyShapeStyle(Color.primary) :
-                            AnyShapeStyle(
-                                LinearGradient(
-                                    colors: [Color.accentColor, Color.purple],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                        )
+                        .fill(Color.primary)
                         .frame(width: max(0, geo.size.width * CGFloat(viewModel.uiState.levelProgress)), height: 8)
-                        .shadow(color: isMono ? Color.clear : Color.accentColor.opacity(0.4), radius: 6, x: 0, y: 2)
                 }
             }
             .frame(height: 8)
@@ -171,14 +150,14 @@ public struct HomeScreen: View {
     private var heroAvatarSection: some View {
         VStack(spacing: 8) {
             ZStack {
-                // Subtle organic background aura (clean, no glass effect)
+                // Subtle organic background aura
                 Circle()
-                    .fill(isMono ? Color.secondary.opacity(0.06) : Color.accentColor.opacity(0.08))
+                    .fill(Color.secondary.opacity(0.06))
                     .frame(width: 280, height: 280)
                 
                 BloubAvatarView(
                     expression: viewModel.uiState.expression,
-                    visualStyle: viewModel.uiState.visualStyle,
+                    visualStyle: .monochrome,
                     themeMode: viewModel.uiState.themeMode,
                     onTap: {
                         HapticManager.impact(style: .light)
@@ -196,7 +175,7 @@ public struct HomeScreen: View {
             Text(viewModel.uiState.userName.isEmpty ? "Bushy ☁️" : "\(viewModel.uiState.userName)'s Bushy ☁️")
                 .font(.title2)
                 .fontWeight(.black)
-                .foregroundColor(isMono ? .primary : .accentColor)
+                .foregroundColor(.primary)
         }
     }
     
@@ -207,36 +186,32 @@ public struct HomeScreen: View {
             statCard(
                 icon: "figure.walk",
                 value: "\(viewModel.uiState.steps)",
-                label: "Steps Today",
-                color: .blue
+                label: "Steps Today"
             )
             statCard(
                 icon: "flame.fill",
                 value: "\(viewModel.uiState.calories)",
-                label: "Burned (kcal)",
-                color: .orange
+                label: "Burned (kcal)"
             )
             statCard(
                 icon: "figure.strengthtraining.traditional",
                 value: "\(viewModel.uiState.pushups)",
-                label: "Pushups",
-                color: .green
+                label: "Pushups"
             )
             statCard(
                 icon: "star.fill",
                 value: "\(viewModel.uiState.xp)",
-                label: "Total XP",
-                color: .purple
+                label: "Total XP"
             )
         }
     }
     
-    private func statCard(icon: String, value: String, label: String, color: Color) -> some View {
+    private func statCard(icon: String, value: String, label: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Image(systemName: icon)
                     .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(isMono ? .primary : color)
+                    .foregroundColor(.primary)
                 Spacer()
             }
             
@@ -268,7 +243,7 @@ public struct HomeScreen: View {
                     Text("View All")
                         .font(.subheadline)
                         .fontWeight(.bold)
-                        .foregroundColor(isMono ? .primary : .accentColor)
+                        .foregroundColor(.primary)
                 }
             }
             
@@ -276,7 +251,7 @@ public struct HomeScreen: View {
                 HStack(spacing: 12) {
                     Image(systemName: task.type.iconName)
                         .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(task.isCompleted ? (isMono ? .primary : .green) : (isMono ? .primary : .accentColor))
+                        .foregroundColor(.primary)
                         .frame(width: 36, height: 36)
                         .liquidGlassCircle()
                     
@@ -294,7 +269,7 @@ public struct HomeScreen: View {
                     
                     if task.isCompleted {
                         Image(systemName: "checkmark.seal.fill")
-                            .foregroundColor(isMono ? .primary : .green)
+                            .foregroundColor(.primary)
                             .font(.title3)
                     } else {
                         Button {
@@ -303,11 +278,10 @@ public struct HomeScreen: View {
                         } label: {
                             Image(systemName: "plus")
                                 .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(isMono ? Color.bushyAppBackground : .white)
+                                .foregroundColor(Color.bushyAppBackground)
                                 .frame(width: 32, height: 32)
-                                .background(isMono ? Color.primary : Color.accentColor)
+                                .background(Color.primary)
                                 .clipShape(Circle())
-                                .shadow(color: isMono ? Color.clear : Color.accentColor.opacity(0.3), radius: 6, x: 0, y: 3)
                         }
                     }
                 }

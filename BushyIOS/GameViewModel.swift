@@ -20,7 +20,8 @@ public final class GameViewModel: ObservableObject {
     
     private func loadStats() {
         if let data = UserDefaults.standard.data(forKey: statsKey),
-           let saved = try? JSONDecoder().decode(UserStats.self, from: data) {
+           var saved = try? JSONDecoder().decode(UserStats.self, from: data) {
+            saved.visualStyle = .monochrome
             self.uiState = saved
         } else {
             // Default initial state
@@ -30,7 +31,7 @@ public final class GameViewModel: ObservableObject {
                 height: 175,
                 isSetupComplete: false,
                 themeMode: .system,
-                visualStyle: .material3,
+                visualStyle: .monochrome,
                 steps: 0,
                 pushups: 0,
                 xp: 0,
@@ -100,106 +101,103 @@ public final class GameViewModel: ObservableObject {
         saveStats()
     }
     
-    // MARK: - HealthKit Sync
+    // MARK: - HealthKit Integration
     
     public func checkHealthKit() {
-        Task {
-            let steps = await HealthManager.shared.fetchTodaySteps()
-            if steps > 0 {
-                await MainActor.run {
-                    self.syncSteps(steps)
-                }
-            }
+        HealthManager.shared.requestAuthorization { [weak self] success, _ in
+            guard success else { return }
+            self?.refreshStats()
         }
-    }
-    
-    public func syncSteps(_ steps: Int) {
-        let diff = max(0, steps - uiState.steps)
-        uiState.steps = steps
-        
-        // Update starter steps task
-        if let index = uiState.tasks.firstIndex(where: { $0.type == .steps }) {
-            uiState.tasks[index].current = min(steps, uiState.tasks[index].target)
-            if uiState.tasks[index].current >= uiState.tasks[index].target && !uiState.tasks[index].isCompleted {
-                uiState.tasks[index].isCompleted = true
-                addXP(500)
-            }
-        }
-        
-        if diff > 0 {
-            addXP(diff / 100 * 10)
-        }
-        saveStats()
     }
     
     public func refreshStats() {
-        Task {
-            let granted = await HealthManager.shared.requestPermissions()
-            if granted {
-                let steps = await HealthManager.shared.fetchTodaySteps()
-                await MainActor.run {
-                    self.syncSteps(steps)
-                    self.uiState.syncMessage = "Synced with Apple Health! 🏃"
-                    self.saveStats()
-                }
-            } else {
-                await MainActor.run {
-                    self.uiState.syncMessage = "HealthKit permission not granted"
-                    self.saveStats()
-                }
-            }
+        HealthManager.shared.fetchTodaySteps { [weak self] steps in
+            guard let self = self else { return }
+            self.uiState.steps = steps
+            self.updateTaskProgress(type: .steps, value: steps)
+            self.recalculateXP()
+            self.saveStats()
         }
     }
     
-    // MARK: - XP & Progression
+    // MARK: - Gamification & XP
     
     public func addXP(_ amount: Int) {
-        guard amount > 0 else { return }
         let oldLevel = uiState.level
         uiState.xp += amount
         let newLevel = uiState.level
         
         if newLevel > oldLevel {
-            // Level up celebratory moment!
+            // Level up animation celebration!
+            HapticManager.notify(type: .success)
             setExpressionDirectly(.celebrating)
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in
-                self?.setExpressionDirectly(.happy)
+                self?.setExpressionDirectly(.neutral)
             }
         }
         saveStats()
     }
     
-    // MARK: - Task Operations
+    private func recalculateXP() {
+        // Base XP from physical movement: 1 step = 0.05 XP, 1 cal = 0.2 XP
+        let movementXP = Int(Double(uiState.steps) * 0.05) + Int(Double(uiState.calories) * 0.2)
+        // Pushups: 5 XP each
+        let pushupXP = uiState.pushups * 5
+        // Tasks completed: 500 XP each
+        let completedTasksXP = uiState.tasks.filter { $0.isCompleted }.count * 500
+        
+        uiState.xp = movementXP + pushupXP + completedTasksXP
+    }
+    
+    // MARK: - Tasks / Quests
+    
+    public func addNewTask(title: String, target: Int, type: TaskType) {
+        let task = HealthTask(
+            id: UUID().uuidString,
+            title: title,
+            target: target,
+            current: 0,
+            type: type
+        )
+        uiState.tasks.append(task)
+        uiState.newlyAddedTaskId = task.id
+        saveStats()
+        
+        // Brief reaction
+        setExpressionDirectly(.excited)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) { [weak self] in
+            self?.setExpressionDirectly(.neutral)
+        }
+    }
     
     public func singleTapIncrement(_ taskId: String) {
         guard let index = uiState.tasks.firstIndex(where: { $0.id == taskId }) else { return }
         var task = uiState.tasks[index]
-        if task.current < task.target {
-            task.current += 1
-            if task.type == .pushups {
-                uiState.pushups += 1
-            }
-            if task.current >= task.target && !task.isCompleted {
-                task.isCompleted = true
-                addXP(500) // Quest complete bonus
-                setExpressionDirectly(.celebrating)
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
-                    self?.setExpressionDirectly(.happy)
-                }
-            } else {
-                addXP(10)
-                setExpressionDirectly(.workingOut)
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self] in
-                    self?.setExpressionDirectly(.happy)
-                }
-            }
-            uiState.tasks[index] = task
-            saveStats()
+        guard !task.isCompleted else { return }
+        
+        task.current += 1
+        if task.type == .pushups {
+            uiState.pushups += 1
         }
-    }
-    
-    public func incrementTask(_ taskId: String) {
-        singleTapIncrement(taskId)
+        
+        if task.current >= task.target {
+            task.isCompleted = true
+            addXP(500)
+            HapticManager.notify(type: .success)
+            setExpressionDirectly(.celebrating)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+                self?.setExpressionDirectly(.neutral)
+            }
+        } else {
+            addXP(10)
+            setExpressionDirectly(.workingOut)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self] in
+                self?.setExpressionDirectly(.neutral)
+            }
+        }
+        
+        uiState.tasks[index] = task
+        saveStats()
     }
     
     public func resetTask(_ taskId: String) {
@@ -214,35 +212,61 @@ public final class GameViewModel: ObservableObject {
         saveStats()
     }
     
-    public func addNewTask(title: String, target: Int, type: TaskType) {
-        let task = HealthTask(title: title, target: target, current: 0, type: type)
-        uiState.tasks.append(task)
-        uiState.newlyAddedTaskId = task.id
-        setExpressionDirectly(.excited)
-        saveStats()
+    private func updateTaskProgress(type: TaskType, value: Int) {
+        for i in 0..<uiState.tasks.count {
+            if uiState.tasks[i].type == type {
+                uiState.tasks[i].current = min(value, uiState.tasks[i].target)
+                if uiState.tasks[i].current >= uiState.tasks[i].target {
+                    if !uiState.tasks[i].isCompleted {
+                        uiState.tasks[i].isCompleted = true
+                        addXP(500)
+                    }
+                }
+            }
+        }
     }
     
-    public func clearNewlyAddedTask() {
-        uiState.newlyAddedTaskId = nil
-        saveStats()
-    }
+    // MARK: - Nutrition & Meals
     
-    // MARK: - Meal Operations
-    
-    public func logMeal(name: String, calories: Int, protein: Int, carbs: Int, fat: Int) {
+    public func logMeal(
+        name: String,
+        calories: Int,
+        proteinGrams: Int,
+        carbsGrams: Int,
+        fatGrams: Int,
+        country: String = "India"
+    ) {
         let meal = LoggedMeal(
             name: name,
             calories: calories,
-            proteinGrams: protein,
-            carbsGrams: carbs,
-            fatGrams: fat,
-            country: uiState.country
+            proteinGrams: proteinGrams,
+            carbsGrams: carbsGrams,
+            fatGrams: fatGrams,
+            country: country
         )
         uiState.loggedMeals.append(meal)
         uiState.bonusCalories += calories / 4 // Bonus gamified burn quota
         addXP(50)
         setExpressionDirectly(.happy)
         saveStats()
+    }
+    
+    public func logMeal(
+        name: String,
+        calories: Int,
+        protein: Int,
+        carbs: Int,
+        fat: Int,
+        country: String = "India"
+    ) {
+        logMeal(
+            name: name,
+            calories: calories,
+            proteinGrams: protein,
+            carbsGrams: carbs,
+            fatGrams: fat,
+            country: country
+        )
     }
     
     public func deleteMeal(_ mealId: String) {
@@ -272,21 +296,15 @@ public final class GameViewModel: ObservableObject {
         }
         
         // Cycle expressions
-        let expr = tapCycleExpressions[tapCycleIndex % tapCycleExpressions.count]
-        tapCycleIndex += 1
-        setExpressionDirectly(expr)
+        tapCycleIndex = (tapCycleIndex + 1) % tapCycleExpressions.count
+        setExpressionDirectly(tapCycleExpressions[tapCycleIndex])
     }
     
     public func onAvatarDoubleTap() {
         setExpressionDirectly(.laughing)
+        HapticManager.impact(style: .heavy)
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
-            self?.setExpressionDirectly(.happy)
-        }
-    }
-    
-    public func onScreenTouch() {
-        if uiState.expression == .tired {
-            setExpressionDirectly(.attentive)
+            self?.setExpressionDirectly(.neutral)
         }
     }
     
@@ -294,15 +312,13 @@ public final class GameViewModel: ObservableObject {
         uiState.expression = expr
     }
     
-    // MARK: - Settings & Customization
-    
     public func setAvatar(_ type: AvatarType) {
         uiState.avatarType = type
         saveStats()
     }
     
     public func setVisualStyle(_ style: VisualStyle) {
-        uiState.visualStyle = style
+        uiState.visualStyle = .monochrome
         saveStats()
     }
     

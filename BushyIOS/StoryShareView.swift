@@ -12,10 +12,6 @@ public struct StoryShareView: View {
     #endif
     @State private var showShareSheet: Bool = false
     
-    private var isMono: Bool {
-        viewModel.uiState.visualStyle == .monochrome
-    }
-    
     public var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
@@ -26,9 +22,9 @@ public struct StoryShareView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 32))
                     .overlay(
                         RoundedRectangle(cornerRadius: 32)
-                            .stroke(isMono ? Color.primary.opacity(0.3) : Color.clear, lineWidth: 1.5)
+                            .stroke(Color.primary.opacity(0.3), lineWidth: 1.5)
                     )
-                    .shadow(color: Color.black.opacity(isMono ? 0.35 : 0.18), radius: 16, x: 0, y: 8)
+                    .shadow(color: Color.black.opacity(0.35), radius: 16, x: 0, y: 8)
                     .padding(.top, 10)
                 
                 Spacer()
@@ -42,22 +38,10 @@ public struct StoryShareView: View {
                         Text("Share Story Card")
                             .fontWeight(.bold)
                     }
-                    .foregroundColor(isMono ? (viewModel.uiState.themeMode == .dark ? .black : .white) : .white)
+                    .foregroundColor(Color.bushyAppBackground)
                     .frame(maxWidth: .infinity)
                     .frame(height: 54)
-                    .background(
-                        isMono ?
-                        LinearGradient(
-                            colors: [Color.primary, Color.primary.opacity(0.85)],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        ) :
-                        LinearGradient(
-                            colors: [Color.pink, Color.purple, Color.orange],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
+                    .background(Color.primary)
                     .clipShape(Capsule())
                     .padding(.horizontal, 32)
                 }
@@ -88,37 +72,25 @@ public struct StoryShareView: View {
     
     private var storyCardContent: some View {
         ZStack {
-            // Background Gradient
-            if isMono {
-                LinearGradient(
-                    colors: [
-                        Color(white: 0.08),
-                        Color(white: 0.14),
-                        Color(white: 0.05)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            } else {
-                LinearGradient(
-                    colors: [
-                        Color.accentColor.opacity(0.35),
-                        Color.bushyAppBackground,
-                        Color.purple.opacity(0.20)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            }
+            // Background Gradient (Pure Monochrome Noir)
+            LinearGradient(
+                colors: [
+                    Color(white: 0.08),
+                    Color(white: 0.14),
+                    Color(white: 0.05)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
             
             // Decorative background circles
             Circle()
-                .fill(isMono ? Color.white.opacity(0.04) : Color.accentColor.opacity(0.06))
+                .fill(Color.white.opacity(0.04))
                 .frame(width: 240, height: 240)
                 .offset(x: -80, y: -120)
             
             Circle()
-                .fill(isMono ? Color.white.opacity(0.03) : Color.purple.opacity(0.06))
+                .fill(Color.white.opacity(0.03))
                 .frame(width: 280, height: 280)
                 .offset(x: 100, y: 140)
             
@@ -129,23 +101,23 @@ public struct StoryShareView: View {
                 Text("LEVEL \(viewModel.uiState.level)")
                     .font(.caption)
                     .fontWeight(.black)
-                    .foregroundColor(isMono ? .black : .white)
+                    .foregroundColor(.black)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 6)
-                    .background(isMono ? Color.white : Color.accentColor)
+                    .background(Color.white)
                     .clipShape(Capsule())
                 
                 Text(viewModel.uiState.userName.isEmpty ? "My Bushy Journey" : "\(viewModel.uiState.userName)'s Grind")
                     .font(.title2)
                     .fontWeight(.black)
-                    .foregroundColor(isMono ? .white : .primary)
+                    .foregroundColor(.white)
                     .multilineTextAlignment(.center)
                 
                 // Progress Bar
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
-                        Capsule().fill(isMono ? Color.white.opacity(0.2) : Color.secondary.opacity(0.2)).frame(height: 6)
-                        Capsule().fill(isMono ? Color.white : Color.accentColor).frame(width: geo.size.width * CGFloat(viewModel.uiState.levelProgress), height: 6)
+                        Capsule().fill(Color.white.opacity(0.2)).frame(height: 6)
+                        Capsule().fill(Color.white).frame(width: geo.size.width * CGFloat(viewModel.uiState.levelProgress), height: 6)
                     }
                 }
                 .frame(width: 140, height: 6)
@@ -155,7 +127,7 @@ public struct StoryShareView: View {
                 // Hero Bloub Avatar
                 BloubAvatarView(
                     expression: viewModel.uiState.expression,
-                    visualStyle: viewModel.uiState.visualStyle,
+                    visualStyle: .monochrome,
                     themeMode: viewModel.uiState.themeMode
                 )
                 .frame(width: 180, height: 180)
@@ -182,10 +154,10 @@ public struct StoryShareView: View {
                     Text("Bushy ☁️")
                         .font(.headline)
                         .fontWeight(.black)
-                        .foregroundColor(isMono ? .white : .primary)
+                        .foregroundColor(.white)
                     Text("• Turn your grind into a game")
                         .font(.caption2)
-                        .foregroundColor(isMono ? Color(white: 0.6) : .secondary)
+                        .foregroundColor(Color(white: 0.6))
                 }
                 .padding(.bottom, 24)
             }
@@ -196,23 +168,23 @@ public struct StoryShareView: View {
         HStack(spacing: 8) {
             Image(systemName: icon)
                 .font(.system(size: 14, weight: .bold))
-                .foregroundColor(isMono ? .white : .accentColor)
+                .foregroundColor(.white)
             VStack(alignment: .leading, spacing: 2) {
                 Text(value)
                     .font(.system(size: 15, weight: .black, design: .rounded))
-                    .foregroundColor(isMono ? .white : .primary)
+                    .foregroundColor(.white)
                 Text(label)
                     .font(.system(size: 10, weight: .semibold))
-                    .foregroundColor(isMono ? Color(white: 0.6) : .secondary)
+                    .foregroundColor(Color(white: 0.6))
             }
             Spacer()
         }
         .padding(10)
-        .background(isMono ? Color(white: 0.16) : Color.bushyCardBackground.opacity(0.8))
+        .background(Color(white: 0.16))
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(isMono ? Color.white.opacity(0.12) : Color.clear, lineWidth: 1)
+                .stroke(Color.white.opacity(0.12), lineWidth: 1)
         )
     }
     
@@ -231,8 +203,8 @@ public struct StoryShareView: View {
 
 #if os(iOS)
 public struct ShareActivityView: UIViewControllerRepresentable {
-    public let activityItems: [Any]
-    public let applicationActivities: [UIActivity]? = nil
+    public var activityItems: [Any]
+    public var applicationActivities: [UIActivity]? = nil
     
     public func makeUIViewController(context: Context) -> UIActivityViewController {
         UIActivityViewController(activityItems: activityItems, applicationActivities: applicationActivities)

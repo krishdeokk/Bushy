@@ -43,6 +43,24 @@ public struct DishInterpretationResult {
 
 public struct MultilingualDishInterpreter {
     
+    public static func interpret(userInput: String) -> EditableFoodItem {
+        let res = interpretDishText(userInput)
+        let entry = res.bestMatch ?? IndianNutritionDatabase.items.first!
+        return EditableFoodItem(
+            foodName: entry.name,
+            confidenceScore: res.confidenceScore > 0 ? res.confidenceScore : 0.90,
+            quantity: 1.0,
+            unit: entry.defaultUnit,
+            prepStyle: .standard,
+            caloriesPer100g: entry.caloriesPer100g,
+            proteinPer100g: entry.proteinPer100g,
+            carbsPer100g: entry.carbsPer100g,
+            fatPer100g: entry.fatPer100g,
+            preparationNote: "\(res.script.rawValue) • \(entry.prepNotes)",
+            originalUserText: userInput
+        )
+    }
+    
     public static func interpretDishText(_ rawInput: String) -> DishInterpretationResult {
         let trimmed = rawInput.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
@@ -68,35 +86,44 @@ public struct MultilingualDishInterpreter {
         let allItems = IndianNutritionDatabase.items
         
         // 1. Exact alias match
-        let directMatches = allItems.filter { entry in
-            entry.name.lowercased() == normalizedInput ||
-            entry.aliases.contains { $0.lowercased() == normalizedInput }
+        for entry in allItems {
+            let aliasList = [entry.name] + entry.aliases
+            for alias in aliasList {
+                let cleanAlias = alias.lowercased()
+                    .components(separatedBy: CharacterSet.alphanumerics.inverted)
+                    .filter { !$0.isEmpty }
+                    .joined(separator: " ")
+                
+                if cleanAlias == normalizedInput {
+                    return DishInterpretationResult(
+                        originalInput: rawInput,
+                        normalizedName: entry.name,
+                        script: script,
+                        confidenceScore: 0.98,
+                        bestMatch: entry,
+                        candidateMatches: [entry],
+                        suggestedCorrection: nil,
+                        isAmbiguous: false
+                    )
+                }
+            }
         }
         
-        if let best = directMatches.first {
-            return DishInterpretationResult(
-                originalInput: rawInput,
-                normalizedName: best.name,
-                script: script,
-                confidenceScore: 1.0,
-                bestMatch: best,
-                candidateMatches: directMatches,
-                suggestedCorrection: nil,
-                isAmbiguous: directMatches.count > 2
-            )
+        // 2. Substring containment
+        var partialMatches: [IndianNutritionEntry] = []
+        for entry in allItems {
+            let aliasList = [entry.name] + entry.aliases
+            if aliasList.contains(where: {
+                let clean = $0.lowercased()
+                return clean.contains(normalizedInput) || normalizedInput.contains(clean)
+            }) {
+                partialMatches.append(entry)
+            }
         }
-        
-        // 2. Substring & Partial match
-        let partialMatches = allItems.filter { entry in
-            entry.name.lowercased().contains(normalizedInput) ||
-            entry.aliases.contains { $0.lowercased().contains(normalizedInput) || normalizedInput.contains($0.lowercased()) }
-        }
-        
-        let genericTerms = ["dal", "daal", "दाल", "paneer", "पनीर", "rice", "चावल", "curry", "dosa", "डोसा", "paratha", "पराठा"]
-        let isGeneric = genericTerms.contains(normalizedInput)
         
         if let best = partialMatches.first {
-            let correction = (best.name.lowercased() != normalizedInput) ? best.name : nil
+            let isGeneric = partialMatches.count > 2
+            let correction = partialMatches.count == 1 ? best.name : nil
             return DishInterpretationResult(
                 originalInput: rawInput,
                 normalizedName: best.name,

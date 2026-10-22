@@ -8,7 +8,6 @@ public struct SetupScreen: View {
     @State private var ageText: String = "22"
     @State private var heightText: String = "175"
     @State private var selectedGender: AvatarType = .male
-    @State private var selectedVisualStyle: VisualStyle = .material3
     @State private var selectedThemeMode: ThemeMode = .system
     @State private var selectedCountry: String = "India"
     
@@ -16,18 +15,11 @@ public struct SetupScreen: View {
         self.viewModel = viewModel
     }
     
-    private var isMono: Bool {
-        selectedVisualStyle == .monochrome
-    }
-    
     public var body: some View {
         ZStack {
             LinearGradient(
-                colors: isMono ? [
+                colors: [
                     Color(white: 0.12),
-                    Color.bushyAppBackground
-                ] : [
-                    Color.accentColor.opacity(0.15),
                     Color.bushyAppBackground
                 ],
                 startPoint: .top,
@@ -38,9 +30,9 @@ public struct SetupScreen: View {
             VStack(spacing: 24) {
                 // Header / Step progress
                 HStack(spacing: 6) {
-                    ForEach(0..<7) { index in
+                    ForEach(0..<6) { index in
                         Capsule()
-                            .fill(index <= currentStep ? (isMono ? Color.primary : Color.accentColor) : Color.secondary.opacity(0.2))
+                            .fill(index <= currentStep ? Color.primary : Color.secondary.opacity(0.2))
                             .frame(height: 5)
                     }
                 }
@@ -57,14 +49,12 @@ public struct SetupScreen: View {
                     case 1:
                         genderStep
                     case 2:
-                        vibeStep
-                    case 3:
                         themeStep
-                    case 4:
+                    case 3:
                         nameStep
-                    case 5:
+                    case 4:
                         statsStep
-                    case 6:
+                    case 5:
                         countryStep
                     default:
                         EmptyView()
@@ -91,27 +81,27 @@ public struct SetupScreen: View {
                     }
                     
                     Button {
-                        if currentStep < 6 {
+                        if currentStep < 5 {
                             withAnimation { currentStep += 1 }
                         } else {
                             let age = Int(ageText) ?? 22
                             let height = Int(heightText) ?? 175
                             viewModel.setAvatar(selectedGender)
-                            viewModel.setVisualStyle(selectedVisualStyle)
+                            viewModel.setVisualStyle(.monochrome)
                             viewModel.setThemeMode(selectedThemeMode)
                             viewModel.setCountry(selectedCountry)
                             viewModel.completeSetup(name: name.isEmpty ? "Hero" : name, age: age, height: height)
                         }
                     } label: {
                         HStack {
-                            Text(currentStep == 6 ? "Let's Play!" : "Continue")
+                            Text(currentStep == 5 ? "Let's Play!" : "Continue")
                                 .fontWeight(.bold)
                             Image(systemName: "arrow.right")
                         }
-                        .foregroundColor(isMono ? (selectedThemeMode == .dark ? .black : .white) : .white)
+                        .foregroundColor(Color.bushyAppBackground)
                         .frame(maxWidth: .infinity)
                         .frame(height: 54)
-                        .background(isMono ? Color.primary : Color.accentColor)
+                        .background(Color.primary)
                         .clipShape(Capsule())
                     }
                 }
@@ -119,117 +109,60 @@ public struct SetupScreen: View {
                 .padding(.bottom, 24)
             }
         }
-        .grayscale(isMono ? 1.0 : 0.0)
     }
     
-    // MARK: - Step Views
+    // MARK: - Steps
     
     private var permissionStep: some View {
         VStack(spacing: 20) {
             Image(systemName: "heart.text.square.fill")
-                .font(.system(size: 72))
-                .foregroundColor(isMono ? .primary : .accentColor)
+                .font(.system(size: 80))
+                .foregroundColor(.primary)
             
-            Text("Sync with Apple Health")
-                .font(.title2)
-                .fontWeight(.bold)
+            Text("Apple Health Sync")
+                .font(.title)
+                .fontWeight(.black)
             
-            Text("Bushy automatically converts your real-world daily steps and fitness activity into XP and game quests.")
+            Text("Bushy reads your steps and active energy burned from Apple Health to level up your Bloub avatar automatically.")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
-            
-            Button {
-                Task {
-                    _ = await HealthManager.shared.requestPermissions()
-                    await MainActor.run {
-                        withAnimation { currentStep += 1 }
-                    }
-                }
-            } label: {
-                Text("Grant Health Access")
-                    .fontWeight(.semibold)
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 12)
-                    .background(isMono ? Color.primary.opacity(0.12) : Color.accentColor.opacity(0.15))
-                    .clipShape(Capsule())
-            }
         }
     }
     
     private var genderStep: some View {
         VStack(spacing: 24) {
-            Text("Choose Your Hero")
+            Text("Choose Your Avatar")
                 .font(.title)
                 .fontWeight(.bold)
             
             HStack(spacing: 20) {
-                ForEach(AvatarType.allCases) { type in
+                ForEach([AvatarType.male, AvatarType.female], id: \.self) { type in
                     Button {
                         selectedGender = type
                     } label: {
                         VStack(spacing: 12) {
                             BloubAvatarView(
                                 expression: .happy,
-                                visualStyle: selectedVisualStyle,
+                                visualStyle: .monochrome,
                                 themeMode: selectedThemeMode
                             )
                             .frame(width: 120, height: 120)
                             
                             Text(type.displayName)
                                 .fontWeight(.bold)
-                                .foregroundColor(selectedGender == type ? (isMono ? .primary : .accentColor) : .primary)
+                                .foregroundColor(selectedGender == type ? .primary : .secondary)
                         }
                         .padding()
                         .frame(width: 140, height: 180)
-                        .background(selectedGender == type ? (isMono ? Color.primary.opacity(0.12) : Color.accentColor.opacity(0.12)) : Color.secondary.opacity(0.08))
+                        .background(selectedGender == type ? Color.primary.opacity(0.12) : Color.secondary.opacity(0.08))
                         .clipShape(RoundedRectangle(cornerRadius: 24))
                         .overlay(
                             RoundedRectangle(cornerRadius: 24)
-                                .stroke(selectedGender == type ? (isMono ? Color.primary : Color.accentColor) : Color.clear, lineWidth: 2)
+                                .stroke(selectedGender == type ? Color.primary : Color.clear, lineWidth: 2)
                         )
                     }
-                }
-            }
-        }
-    }
-    
-    private var vibeStep: some View {
-        VStack(spacing: 24) {
-            Text("Select Visual Style")
-                .font(.title)
-                .fontWeight(.bold)
-            
-            HStack(spacing: 20) {
-                VStack(spacing: 12) {
-                    BloubAvatarView(expression: .excited, visualStyle: .material3)
-                        .frame(width: 110, height: 110)
-                    Text("Vibrant M3")
-                        .fontWeight(.bold)
-                }
-                .padding()
-                .frame(width: 140, height: 180)
-                .background(selectedVisualStyle == .material3 ? Color.accentColor.opacity(0.12) : Color.secondary.opacity(0.08))
-                .clipShape(RoundedRectangle(cornerRadius: 24))
-                .overlay(RoundedRectangle(cornerRadius: 24).stroke(selectedVisualStyle == .material3 ? Color.accentColor : Color.clear, lineWidth: 2))
-                .onTapGesture {
-                    withAnimation { selectedVisualStyle = .material3 }
-                }
-                
-                VStack(spacing: 12) {
-                    BloubAvatarView(expression: .excited, visualStyle: .monochrome)
-                        .frame(width: 110, height: 110)
-                    Text("Monochrome")
-                        .fontWeight(.bold)
-                }
-                .padding()
-                .frame(width: 140, height: 180)
-                .background(selectedVisualStyle == .monochrome ? Color.primary.opacity(0.12) : Color.secondary.opacity(0.08))
-                .clipShape(RoundedRectangle(cornerRadius: 24))
-                .overlay(RoundedRectangle(cornerRadius: 24).stroke(selectedVisualStyle == .monochrome ? Color.primary : Color.clear, lineWidth: 2))
-                .onTapGesture {
-                    withAnimation { selectedVisualStyle = .monochrome }
                 }
             }
         }
@@ -254,7 +187,7 @@ public struct SetupScreen: View {
                             Spacer()
                             if selectedThemeMode == mode {
                                 Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(isMono ? .primary : .accentColor)
+                                    .foregroundColor(.primary)
                             }
                         }
                         .padding()
@@ -338,8 +271,7 @@ public struct SetupScreen: View {
                     .fontWeight(.bold)
             }
             .padding()
-            .frame(maxWidth: 320)
-            .background(isMono ? Color.primary.opacity(0.1) : Color.accentColor.opacity(0.12))
+            .background(Color.secondary.opacity(0.1))
             .clipShape(RoundedRectangle(cornerRadius: 20))
         }
     }
