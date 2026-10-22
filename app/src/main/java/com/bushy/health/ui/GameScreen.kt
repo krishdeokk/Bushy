@@ -32,13 +32,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Assignment
-import androidx.compose.material.icons.automirrored.filled.DirectionsBike
-import androidx.compose.material.icons.automirrored.filled.DirectionsRun
-import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
-import androidx.compose.material.icons.automirrored.filled.TextSnippet
-import androidx.compose.material.icons.automirrored.filled.Undo
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.rounded.Assignment
+import androidx.compose.material.icons.automirrored.rounded.DirectionsBike
+import androidx.compose.material.icons.automirrored.rounded.DirectionsRun
+import androidx.compose.material.icons.automirrored.rounded.DirectionsWalk
+import androidx.compose.material.icons.automirrored.rounded.TextSnippet
+import androidx.compose.material.icons.automirrored.rounded.Undo
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -271,7 +271,7 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
                         IconButton(onClick = { showOptionsMenu = true }) {
                             Box {
                                 Icon(
-                                    Icons.Default.MoreVert, 
+                                    Icons.Rounded.MoreVert, 
                                     contentDescription = "Options",
                                     tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                                 )
@@ -308,7 +308,7 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
                                     }
                                 }
                             },
-                            leadingIcon = { Icon(Icons.Default.Sync, null, tint = MaterialTheme.colorScheme.primary) },
+                            leadingIcon = { Icon(Icons.Rounded.Sync, null, tint = MaterialTheme.colorScheme.primary) },
                             onClick = { 
                                 showOptionsMenu = false
                                 viewModel.refreshStats() 
@@ -323,7 +323,7 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
 
                         DropdownMenuItem(
                             text = { Text("Switch Hero", fontWeight = FontWeight.Medium) },
-                            leadingIcon = { Icon(Icons.Default.Face, null, tint = MaterialTheme.colorScheme.primary) },
+                            leadingIcon = { Icon(Icons.Rounded.Face, null, tint = MaterialTheme.colorScheme.primary) },
                             onClick = { 
                                 showOptionsMenu = false
                                 showAvatarSelection = true 
@@ -346,7 +346,7 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
 
                         VibeMenuItem(
                             label = "Vibrant (M3)",
-                            icon = Icons.Default.AutoAwesome,
+                            icon = Icons.Rounded.AutoAwesome,
                             selected = uiState.visualStyle == VisualStyle.MATERIAL3,
                             onClick = { 
                                 showOptionsMenu = false
@@ -355,7 +355,7 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
                         )
                         VibeMenuItem(
                             label = "Minimal (Mono)",
-                            icon = Icons.Default.FilterBAndW,
+                            icon = Icons.Rounded.FilterBAndW,
                             selected = uiState.visualStyle == VisualStyle.MONOCHROME,
                             onClick = { 
                                 showOptionsMenu = false
@@ -379,7 +379,7 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
 
                         ThemeMenuItem(
                             label = "Light",
-                            icon = Icons.Default.LightMode,
+                            icon = Icons.Rounded.LightMode,
                             selected = uiState.themeMode == ThemeMode.LIGHT,
                             onClick = { 
                                 showOptionsMenu = false
@@ -388,7 +388,7 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
                         )
                         ThemeMenuItem(
                             label = "Dark",
-                            icon = Icons.Default.DarkMode,
+                            icon = Icons.Rounded.DarkMode,
                             selected = uiState.themeMode == ThemeMode.DARK,
                             onClick = { 
                                 showOptionsMenu = false
@@ -397,7 +397,7 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
                         )
                         ThemeMenuItem(
                             label = "Auto",
-                            icon = Icons.Default.SettingsSuggest,
+                            icon = Icons.Rounded.SettingsSuggest,
                             selected = uiState.themeMode == ThemeMode.SYSTEM,
                             onClick = { 
                                 showOptionsMenu = false
@@ -413,7 +413,7 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
                         
                         DropdownMenuItem(
                             text = { Text("Reset Progress", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Medium) },
-                            leadingIcon = { Icon(Icons.AutoMirrored.Filled.Undo, null, tint = MaterialTheme.colorScheme.error) },
+                            leadingIcon = { Icon(Icons.AutoMirrored.Rounded.Undo, null, tint = MaterialTheme.colorScheme.error) },
                             onClick = { 
                                 showOptionsMenu = false
                                 performSubtleClick()
@@ -429,7 +429,7 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
                         modifier = Modifier.align(Alignment.CenterEnd)
                     ) {
                         Icon(
-                            Icons.Default.Share, 
+                            Icons.Rounded.Share, 
                             contentDescription = "Share",
                             tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         )
@@ -562,14 +562,14 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
                                     selected = pagerState.currentPage == 0,
                                     onClick = { onPillClick(0) },
                                     label = "Home",
-                                    icon = Icons.Default.Home,
+                                    icon = Icons.Rounded.Home,
                                     selectedColor = MaterialTheme.colorScheme.primary
                                 )
                                 PillTabItem(
                                     selected = pagerState.currentPage == 1,
                                     onClick = { onPillClick(1) },
                                     label = "Tasks",
-                                    icon = Icons.AutoMirrored.Filled.Assignment,
+                                    icon = Icons.AutoMirrored.Rounded.Assignment,
                                     selectedColor = MaterialTheme.colorScheme.primary
                                 )
                             }
@@ -609,7 +609,7 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    Icons.Default.Cloud, 
+                                    Icons.Rounded.Cloud, 
                                     contentDescription = "Bushy AI",
                                     modifier = Modifier.size(32.dp)
                                 )
@@ -864,7 +864,7 @@ fun ShareMenuDialog(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp)
                 ) {
-                    Icon(Icons.Default.AutoAwesome, contentDescription = null)
+                    Icon(Icons.Rounded.AutoAwesome, contentDescription = null)
                     Spacer(modifier = Modifier.width(12.dp))
                     Text("Share Hero Story (Image)")
                 }
@@ -873,7 +873,7 @@ fun ShareMenuDialog(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp)
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.TextSnippet, contentDescription = null)
+                    Icon(Icons.AutoMirrored.Rounded.TextSnippet, contentDescription = null)
                     Spacer(modifier = Modifier.width(12.dp))
                     Text("Share Stats as Text")
                 }
@@ -1161,7 +1161,7 @@ fun TasksScreen(
                 contentColor = MaterialTheme.colorScheme.onPrimary,
                 shape = MaterialExpressiveShapes.cookie9
             ) {
-                Icon(Icons.Default.Add, "Add Mission", modifier = Modifier.size(48.dp))
+                Icon(Icons.Rounded.Add, "Add Mission", modifier = Modifier.size(48.dp))
             }
         }
     }
@@ -1193,7 +1193,7 @@ fun MealCard(
                 )
                 IconButton(onClick = onDelete) {
                     Icon(
-                        Icons.Default.Delete,
+                        Icons.Rounded.Delete,
                         contentDescription = "Delete Meal",
                         tint = MaterialTheme.colorScheme.error
                     )
@@ -1379,16 +1379,16 @@ fun TaskCard(
     val taskIcon = remember(task.title) {
         val title = task.title.lowercase()
         when {
-            title.contains("walk") || title.contains("step") -> Icons.AutoMirrored.Filled.DirectionsWalk
-            title.contains("run") || title.contains("cardio") -> Icons.AutoMirrored.Filled.DirectionsRun
-            title.contains("pushup") || title.contains("chest") || title.contains("bench") -> Icons.Default.FitnessCenter
-            title.contains("bicep") || title.contains("curl") || title.contains("arm") -> Icons.Default.SportsGymnastics
-            title.contains("leg") || title.contains("squat") || title.contains("lunges") -> Icons.AutoMirrored.Filled.DirectionsRun
-            title.contains("pullup") || title.contains("back") || title.contains("row") -> Icons.Default.VerticalAlignTop
-            title.contains("abs") || title.contains("core") || title.contains("situp") -> Icons.Default.SelfImprovement
-            title.contains("bike") || title.contains("cycle") -> Icons.AutoMirrored.Filled.DirectionsBike
-            title.contains("swim") -> Icons.Default.Pool
-            else -> Icons.Default.Timer
+            title.contains("walk") || title.contains("step") -> Icons.AutoMirrored.Rounded.DirectionsWalk
+            title.contains("run") || title.contains("cardio") -> Icons.AutoMirrored.Rounded.DirectionsRun
+            title.contains("pushup") || title.contains("chest") || title.contains("bench") -> Icons.Rounded.FitnessCenter
+            title.contains("bicep") || title.contains("curl") || title.contains("arm") -> Icons.Rounded.SportsGymnastics
+            title.contains("leg") || title.contains("squat") || title.contains("lunges") -> Icons.AutoMirrored.Rounded.DirectionsRun
+            title.contains("pullup") || title.contains("back") || title.contains("row") -> Icons.Rounded.VerticalAlignTop
+            title.contains("abs") || title.contains("core") || title.contains("situp") -> Icons.Rounded.SelfImprovement
+            title.contains("bike") || title.contains("cycle") -> Icons.AutoMirrored.Rounded.DirectionsBike
+            title.contains("swim") -> Icons.Rounded.Pool
+            else -> Icons.Rounded.Timer
         }
     }
 
@@ -1442,7 +1442,7 @@ fun TaskCard(
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
-                                imageVector = if (task.isCompleted) Icons.Default.CheckCircle else taskIcon,
+                                imageVector = if (task.isCompleted) Icons.Rounded.CheckCircle else taskIcon,
                                 contentDescription = null,
                                 tint = if (task.isCompleted) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(24.dp)
@@ -1471,7 +1471,7 @@ fun TaskCard(
                             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                         )
                     ) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Reset", modifier = Modifier.size(16.dp))
+                        Icon(Icons.Rounded.Refresh, contentDescription = "Reset", modifier = Modifier.size(16.dp))
                     }
 
                     Spacer(modifier = Modifier.width(6.dp))
@@ -1487,7 +1487,7 @@ fun TaskCard(
                             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                         )
                     ) {
-                        Icon(Icons.Default.Delete, contentDescription = "Delete", modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.error)
+                        Icon(Icons.Rounded.Delete, contentDescription = "Delete", modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.error)
                     }
                 }
                 
@@ -1606,7 +1606,7 @@ fun StatsGrid(stats: UserStats) {
         ) {
             StatCard(
                 modifier = Modifier.weight(1f),
-                icon = Icons.AutoMirrored.Filled.DirectionsWalk,
+                icon = Icons.AutoMirrored.Rounded.DirectionsWalk,
                 value = "${stats.steps}",
                 label = "Steps",
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -1614,7 +1614,7 @@ fun StatsGrid(stats: UserStats) {
             )
             StatCard(
                 modifier = Modifier.weight(1f),
-                icon = Icons.Default.LocalFireDepartment,
+                icon = Icons.Rounded.LocalFireDepartment,
                 value = "${stats.calories}",
                 label = "Calories",
                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
@@ -1628,7 +1628,7 @@ fun StatsGrid(stats: UserStats) {
         ) {
             StatCard(
                 modifier = Modifier.weight(1f),
-                icon = Icons.Default.FitnessCenter,
+                icon = Icons.Rounded.FitnessCenter,
                 value = "${stats.pushups}",
                 label = "Pushups",
                 containerColor = MaterialTheme.colorScheme.tertiaryContainer,
@@ -1637,7 +1637,7 @@ fun StatsGrid(stats: UserStats) {
             val completedMissions = stats.tasks.count { it.isCompleted }
             StatCard(
                 modifier = Modifier.weight(1f),
-                icon = Icons.Default.CheckCircle,
+                icon = Icons.Rounded.CheckCircle,
                 value = "$completedMissions / ${stats.tasks.size}",
                 label = "Missions",
                 containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -1647,7 +1647,7 @@ fun StatsGrid(stats: UserStats) {
 
         StatCard(
             modifier = Modifier.fillMaxWidth(),
-            icon = Icons.Default.Star,
+            icon = Icons.Rounded.Star,
             value = "${stats.xp}",
             label = "Total XP Earned",
             containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
@@ -1660,7 +1660,7 @@ fun StatsGrid(stats: UserStats) {
         ) {
             StatCard(
                 modifier = Modifier.weight(1f),
-                icon = Icons.Default.Cake,
+                icon = Icons.Rounded.Cake,
                 value = if (stats.age > 0) "${stats.age}" else "--",
                 label = "Age",
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -1668,7 +1668,7 @@ fun StatsGrid(stats: UserStats) {
             )
             StatCard(
                 modifier = Modifier.weight(1f),
-                icon = Icons.Default.Height,
+                icon = Icons.Rounded.Height,
                 value = if (stats.height > 0) "${stats.height}cm" else "--",
                 label = "Height",
                 containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -1705,7 +1705,7 @@ fun MealsSection(
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
-                            Icons.Default.Restaurant,
+                            Icons.Rounded.Restaurant,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onSecondaryContainer,
                             modifier = Modifier.size(20.dp)
@@ -1767,7 +1767,7 @@ fun MealsSection(
                                 onClick = { onDeleteMeal(meal.id) },
                                 modifier = Modifier.size(28.dp)
                             ) {
-                                Icon(Icons.Default.Close, contentDescription = "Delete Meal", modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.error)
+                                Icon(Icons.Rounded.Close, contentDescription = "Delete Meal", modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.error)
                             }
                         }
                     }
@@ -1881,7 +1881,7 @@ fun SyncStatusCard(message: String) {
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Default.Info, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+            Icon(Icons.Rounded.Info, contentDescription = null, tint = MaterialTheme.colorScheme.error)
             Spacer(modifier = Modifier.width(12.dp))
             Text(
                 text = message,
@@ -1981,7 +1981,7 @@ fun AvatarOption(
 fun ChangelogDialog(onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        icon = { Icon(Icons.Default.Celebration, null, modifier = Modifier.size(32.dp), tint = MaterialTheme.colorScheme.primary) },
+        icon = { Icon(Icons.Rounded.Celebration, null, modifier = Modifier.size(32.dp), tint = MaterialTheme.colorScheme.primary) },
         title = { 
             Text(
                 "What's New in Bushy", 

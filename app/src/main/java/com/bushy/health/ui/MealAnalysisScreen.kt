@@ -10,17 +10,17 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.PhotoCamera
-import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.PhotoCamera
+import androidx.compose.material.icons.rounded.Remove
+import androidx.compose.material.icons.rounded.Restaurant
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -72,12 +72,12 @@ fun MealAnalysisScreen(
                 title = { Text("Indian Meal Calorie Estimator", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
                     IconButton(onClick = { showAiModelInfoDialog = true }) {
-                        Icon(Icons.Default.Info, contentDescription = "AI Pipeline Info", tint = MaterialTheme.colorScheme.primary)
+                        Icon(Icons.Rounded.Info, contentDescription = "AI Pipeline Info", tint = MaterialTheme.colorScheme.primary)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -101,7 +101,7 @@ fun MealAnalysisScreen(
                         containerColor = MaterialTheme.colorScheme.primary
                     )
                 ) {
-                    Icon(Icons.Default.Check, contentDescription = null)
+                    Icon(Icons.Rounded.Check, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
                     Text("Save Confirmed Meal (${totalNutrients.calories} kcal)", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
@@ -144,7 +144,7 @@ fun MealAnalysisScreen(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    Icons.Default.Restaurant,
+                                    Icons.Rounded.Restaurant,
                                     contentDescription = null,
                                     modifier = Modifier.size(48.dp),
                                     tint = MaterialTheme.colorScheme.onPrimaryContainer
@@ -170,7 +170,7 @@ fun MealAnalysisScreen(
                                     modifier = Modifier.clickable { showAiModelInfoDialog = true }
                                 ) {
                                     Icon(
-                                        Icons.Default.AutoAwesome,
+                                        Icons.Rounded.AutoAwesome,
                                         contentDescription = null,
                                         modifier = Modifier.size(14.dp),
                                         tint = MaterialTheme.colorScheme.primary
@@ -189,7 +189,7 @@ fun MealAnalysisScreen(
                                 onClick = onRetakePhoto,
                                 shape = RoundedCornerShape(12.dp)
                             ) {
-                                Icon(Icons.Default.PhotoCamera, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Icon(Icons.Rounded.PhotoCamera, contentDescription = null, modifier = Modifier.size(16.dp))
                                 Spacer(Modifier.width(4.dp))
                                 Text("Retake")
                             }
@@ -211,7 +211,7 @@ fun MealAnalysisScreen(
                         Column(modifier = Modifier.padding(16.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
-                                    Icons.Default.Info,
+                                    Icons.Rounded.Info,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.error,
                                     modifier = Modifier.size(24.dp)
@@ -247,7 +247,7 @@ fun MealAnalysisScreen(
                                     ),
                                     shape = RoundedCornerShape(12.dp)
                                 ) {
-                                    Icon(Icons.Default.PhotoCamera, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Icon(Icons.Rounded.PhotoCamera, contentDescription = null, modifier = Modifier.size(16.dp))
                                     Spacer(Modifier.width(4.dp))
                                     Text("Retake Photo")
                                 }
@@ -257,7 +257,7 @@ fun MealAnalysisScreen(
                                     modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(12.dp)
                                 ) {
-                                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                                     Spacer(Modifier.width(4.dp))
                                     Text("Add Manually")
                                 }
@@ -322,7 +322,7 @@ fun MealAnalysisScreen(
                         // Assumption & Uncertainty Explanation
                         Row(verticalAlignment = Alignment.Top) {
                             Icon(
-                                Icons.Default.Info,
+                                Icons.Rounded.Info,
                                 contentDescription = null,
                                 modifier = Modifier.size(16.dp).padding(top = 2.dp),
                                 tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
@@ -352,7 +352,7 @@ fun MealAnalysisScreen(
                     )
 
                     TextButton(onClick = { showAddFoodDialog = true }) {
-                        Icon(Icons.Default.Add, contentDescription = null)
+                        Icon(Icons.Rounded.Add, contentDescription = null)
                         Spacer(Modifier.width(4.dp))
                         Text("Add Dish")
                     }
@@ -378,7 +378,7 @@ fun MealAnalysisScreen(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Icon(
-                                Icons.Default.Add,
+                                Icons.Rounded.Add,
                                 contentDescription = null,
                                 modifier = Modifier.size(32.dp),
                                 tint = MaterialTheme.colorScheme.primary
@@ -533,7 +533,7 @@ fun FoodItemCard(
                         )
                         Spacer(Modifier.width(6.dp))
                         Icon(
-                            Icons.Default.Edit,
+                            Icons.Rounded.Edit,
                             contentDescription = "Edit Dish Name",
                             modifier = Modifier.size(16.dp),
                             tint = MaterialTheme.colorScheme.primary
@@ -568,7 +568,7 @@ fun FoodItemCard(
                 }
 
                 IconButton(onClick = onRemove) {
-                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+                    Icon(Icons.Rounded.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
                 }
             }
 
@@ -595,7 +595,7 @@ fun FoodItemCard(
                         },
                         modifier = Modifier.size(28.dp)
                     ) {
-                        Icon(Icons.Default.Remove, contentDescription = "Decrease", modifier = Modifier.size(16.dp))
+                        Icon(Icons.Rounded.Remove, contentDescription = "Decrease", modifier = Modifier.size(16.dp))
                     }
 
                     Text(
@@ -610,7 +610,7 @@ fun FoodItemCard(
                         },
                         modifier = Modifier.size(28.dp)
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = "Increase", modifier = Modifier.size(16.dp))
+                        Icon(Icons.Rounded.Add, contentDescription = "Increase", modifier = Modifier.size(16.dp))
                     }
                 }
 
@@ -715,7 +715,7 @@ fun EditDishNameDialog(
                     trailingIcon = {
                         if (textInput.isNotEmpty()) {
                             IconButton(onClick = { textInput = "" }) {
-                                Icon(Icons.Default.Close, contentDescription = "Clear")
+                                Icon(Icons.Rounded.Close, contentDescription = "Clear")
                             }
                         }
                     }
@@ -734,7 +734,7 @@ fun EditDishNameDialog(
                                 .padding(10.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary)
+                            Icon(Icons.Rounded.AutoAwesome, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary)
                             Spacer(Modifier.width(6.dp))
                             Text(
                                 text = "Did you mean: ${interpretation.suggestedCorrection}?",
@@ -778,7 +778,7 @@ fun EditDishNameDialog(
                                     Text(entry.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
                                     Text("${entry.regionOrCategory} • ${entry.caloriesPer100g} kcal/100g", style = MaterialTheme.typography.labelSmall)
                                 }
-                                Icon(Icons.Default.Check, contentDescription = "Select")
+                                Icon(Icons.Rounded.Check, contentDescription = "Select")
                             }
                             HorizontalDivider()
                         }
@@ -913,7 +913,7 @@ fun AddFoodDialog(
                                 Text(entry.name, fontWeight = FontWeight.SemiBold)
                                 Text("${entry.regionOrCategory} • ${entry.caloriesPer100g} kcal / 100g", style = MaterialTheme.typography.bodySmall)
                             }
-                            Icon(Icons.Default.Add, contentDescription = "Add")
+                            Icon(Icons.Rounded.Add, contentDescription = "Add")
                         }
                         HorizontalDivider()
                     }
@@ -1029,7 +1029,7 @@ fun AiModelInfoDialog(onDismiss: () -> Unit) {
         onDismissRequest = onDismiss,
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Icon(Icons.Rounded.AutoAwesome, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                 Spacer(Modifier.width(8.dp))
                 Text("Local Vision & Multilingual AI Status", fontWeight = FontWeight.Bold)
             }

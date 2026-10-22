@@ -7,8 +7,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.rounded.DirectionsWalk
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -146,7 +146,7 @@ fun StoryShareCard(
                 ) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         StoryStatItem(
-                            icon = Icons.AutoMirrored.Filled.DirectionsWalk,
+                            icon = Icons.AutoMirrored.Rounded.DirectionsWalk,
                             value = "${stats.steps}",
                             label = "Steps",
                             containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -154,7 +154,7 @@ fun StoryShareCard(
                             shape = RoundedCornerShape(28.dp, 14.dp, 24.dp, 24.dp)
                         )
                         StoryStatItem(
-                            icon = Icons.Default.LocalFireDepartment,
+                            icon = Icons.Rounded.LocalFireDepartment,
                             value = "${stats.calories}",
                             label = "Calories",
                             containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -164,7 +164,7 @@ fun StoryShareCard(
                     }
 
                     StoryStatItem(
-                        icon = Icons.Default.Star,
+                        icon = Icons.Rounded.Star,
                         value = "${stats.xp} XP Total",
                         label = "Overall Progress",
                         containerColor = MaterialTheme.colorScheme.tertiaryContainer,

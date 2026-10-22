@@ -17,9 +17,9 @@ import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import android.os.Build
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -138,7 +138,7 @@ fun SetupScreen(
                         modifier = Modifier.size(64.dp),
                         shape = RoundedCornerShape(24.dp)
                     ) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
                     }
                 }
 
@@ -175,7 +175,7 @@ fun SetupScreen(
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Icon(if (pagerState.currentPage == 6) Icons.Default.Check else Icons.AutoMirrored.Filled.ArrowForward, null)
+                    Icon(if (pagerState.currentPage == 6) Icons.Rounded.Check else Icons.AutoMirrored.Rounded.ArrowForward, null)
                 }
             }
         }
@@ -198,7 +198,7 @@ fun PermissionStep(onRequestPermissions: () -> Unit) {
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
-                    Icons.Default.Favorite,
+                    Icons.Rounded.Favorite,
                     contentDescription = null,
                     modifier = Modifier.size(64.dp),
                     tint = MaterialTheme.colorScheme.primary
@@ -443,21 +443,21 @@ fun ThemeStep(mode: ThemeMode, onSelect: (ThemeMode) -> Unit) {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             ThemeCard(
-                icon = Icons.Default.LightMode,
+                icon = Icons.Rounded.LightMode,
                 label = "Light Mode",
                 selected = mode == ThemeMode.LIGHT,
                 onClick = { onSelect(ThemeMode.LIGHT) },
                 modifier = Modifier.fillMaxWidth()
             )
             ThemeCard(
-                icon = Icons.Default.DarkMode,
+                icon = Icons.Rounded.DarkMode,
                 label = "Dark Mode",
                 selected = mode == ThemeMode.DARK,
                 onClick = { onSelect(ThemeMode.DARK) },
                 modifier = Modifier.fillMaxWidth()
             )
             ThemeCard(
-                icon = Icons.Default.SettingsSuggest,
+                icon = Icons.Rounded.SettingsSuggest,
                 label = "Follow System",
                 selected = mode == ThemeMode.SYSTEM,
                 onClick = { onSelect(ThemeMode.SYSTEM) },
@@ -509,7 +509,7 @@ fun ThemeCard(
             )
             Spacer(modifier = Modifier.weight(1f))
             if (selected) {
-                Icon(Icons.Default.Check, null, tint = MaterialTheme.colorScheme.primary)
+                Icon(Icons.Rounded.Check, null, tint = MaterialTheme.colorScheme.primary)
             }
         }
     }

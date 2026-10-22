@@ -44,7 +44,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -357,7 +357,7 @@ private fun CameraContent(
                             .size(44.dp)
                             .background(Color.White.copy(alpha = 0.15f), CircleShape)
                     ) {
-                        Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White)
+                        Icon(Icons.Rounded.Close, contentDescription = "Close", tint = Color.White)
                     }
 
                     IconButton(
@@ -374,9 +374,9 @@ private fun CameraContent(
                             .background(Color.White.copy(alpha = 0.15f), CircleShape)
                     ) {
                         val flashIcon = when (flashMode) {
-                            ImageCapture.FLASH_MODE_ON -> Icons.Default.FlashOn
-                            ImageCapture.FLASH_MODE_AUTO -> Icons.Default.FlashAuto
-                            else -> Icons.Default.FlashOff
+                            ImageCapture.FLASH_MODE_ON -> Icons.Rounded.FlashOn
+                            ImageCapture.FLASH_MODE_AUTO -> Icons.Rounded.FlashAuto
+                            else -> Icons.Rounded.FlashOff
                         }
                         Icon(flashIcon, contentDescription = "Flash", tint = Color.White)
                     }
@@ -573,7 +573,7 @@ private fun CameraContent(
                             .background(Color.White.copy(alpha = 0.15f), CircleShape)
                     ) {
                         Icon(
-                            Icons.Default.Cameraswitch,
+                            Icons.Rounded.Cameraswitch,
                             contentDescription = "Flip Camera",
                             tint = Color.White,
                             modifier = Modifier.size(26.dp)
@@ -626,7 +626,7 @@ private fun CameraContent(
                             contentColor = Color.White
                         )
                     ) {
-                        Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Icon(Icons.Rounded.Refresh, contentDescription = null, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Retake", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                     }
@@ -644,7 +644,7 @@ private fun CameraContent(
                             .height(56.dp),
                         shape = RoundedCornerShape(28.dp)
                     ) {
-                        Icon(Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Icon(Icons.Rounded.AutoAwesome, contentDescription = null, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Analyze Meal", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                     }
@@ -688,7 +688,7 @@ private fun CameraPermissionState(
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
-                    Icons.Default.PhotoCamera,
+                    Icons.Rounded.PhotoCamera,
                     contentDescription = null,
                     modifier = Modifier.size(52.dp),
                     tint = MaterialTheme.colorScheme.primary

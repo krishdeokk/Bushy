@@ -18,12 +18,12 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Collections
-import androidx.compose.material.icons.filled.PhotoCamera
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.rounded.Send
+import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Collections
+import androidx.compose.material.icons.rounded.PhotoCamera
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -245,7 +245,7 @@ fun BushyAIScreen(
                         modifier = Modifier.align(Alignment.CenterStart)
                     ) {
                         Icon(
-                            Icons.Default.Delete,
+                            Icons.Rounded.Delete,
                             contentDescription = "Clear Chat History",
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -257,7 +257,7 @@ fun BushyAIScreen(
                     modifier = Modifier.align(Alignment.CenterEnd)
                 ) {
                     Icon(
-                        Icons.Default.Tune,
+                        Icons.Rounded.Tune,
                         contentDescription = "AI Model Settings",
                         tint = MaterialTheme.colorScheme.primary
                     )
@@ -335,7 +335,7 @@ fun BushyAIScreen(
                                     modifier = Modifier.size(44.dp)
                                 ) {
                                     Icon(
-                                        Icons.Default.PhotoCamera,
+                                        Icons.Rounded.PhotoCamera,
                                         contentDescription = "Snap Meal Photo",
                                         tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.size(26.dp)
@@ -350,7 +350,7 @@ fun BushyAIScreen(
                                 ) {
                                     DropdownMenuItem(
                                         text = { Text("Take Meal Photo", fontWeight = FontWeight.Bold) },
-                                        leadingIcon = { Icon(Icons.Default.PhotoCamera, null, tint = MaterialTheme.colorScheme.primary) },
+                                        leadingIcon = { Icon(Icons.Rounded.PhotoCamera, null, tint = MaterialTheme.colorScheme.primary) },
                                         onClick = {
                                             showMediaMenu = false
                                             showCustomCamera = true
@@ -358,7 +358,7 @@ fun BushyAIScreen(
                                     )
                                     DropdownMenuItem(
                                         text = { Text("Choose from Gallery", fontWeight = FontWeight.Bold) },
-                                        leadingIcon = { Icon(Icons.Default.Collections, null, tint = MaterialTheme.colorScheme.primary) },
+                                        leadingIcon = { Icon(Icons.Rounded.Collections, null, tint = MaterialTheme.colorScheme.primary) },
                                         onClick = {
                                             showMediaMenu = false
                                             photoPickerLauncher.launch(
@@ -388,7 +388,7 @@ fun BushyAIScreen(
                         enabled = inputText.isNotBlank() && !isGenerating
                     ) {
                         Icon(
-                            Icons.AutoMirrored.Filled.Send,
+                            Icons.AutoMirrored.Rounded.Send,
                             contentDescription = "Send"
                         )
                     }
@@ -439,7 +439,7 @@ fun EmptyStateMessage() {
         verticalArrangement = Arrangement.Center
     ) {
         Icon(
-            Icons.Filled.AutoAwesome,
+            Icons.Rounded.AutoAwesome,
             contentDescription = null,
             modifier = Modifier.size(64.dp),
             tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
@@ -547,7 +547,7 @@ fun ModelSettingsBottomSheet(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(
-                Icons.Default.Tune,
+                Icons.Rounded.Tune,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(36.dp)
@@ -635,7 +635,7 @@ fun ModelSettingsBottomSheet(
                             Spacer(modifier = Modifier.height(8.dp))
                             if (isReady) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Default.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+                                    Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text("Model ready for 100% offline inference", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                                 }
