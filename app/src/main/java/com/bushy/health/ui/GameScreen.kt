@@ -208,12 +208,14 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
                     } else if (page == 1) {
                         TasksScreen(
                             tasks = uiState.tasks, 
+                            loggedMeals = uiState.loggedMeals,
                             newlyAddedTaskId = uiState.newlyAddedTaskId,
                             onClearNewlyAdded = { viewModel.clearNewlyAddedTask() },
                             onTaskHold = { viewModel.incrementTask(it) },
                             onTaskTap = { viewModel.singleTapIncrement(it) },
                             onTaskReset = { viewModel.resetTask(it) },
                             onTaskDelete = { viewModel.deleteTask(it) },
+                            onMealDelete = { viewModel.deleteMeal(it) },
                             onAddTask = { showAddTaskDialog = true }
                         )
                     } else {
@@ -975,15 +977,18 @@ fun HomeScreen(
 @Composable
 fun TasksScreen(
     tasks: List<com.bushy.health.HealthTask>, 
+    loggedMeals: List<com.bushy.health.LoggedMeal>,
     newlyAddedTaskId: String? = null,
     onClearNewlyAdded: () -> Unit = {},
     onTaskHold: (String) -> Unit, 
     onTaskTap: (String) -> Unit,
     onTaskReset: (String) -> Unit, 
     onTaskDelete: (String) -> Unit,
+    onMealDelete: (String) -> Unit,
     onAddTask: () -> Unit
 ) {
     var selectedFilter by remember { mutableIntStateOf(0) } // 0: All, 1: Active, 2: Done
+    var selectedTab by remember { mutableIntStateOf(0) } // 0: Missions, 1: Meals
 
     val filteredTasks = remember(tasks, selectedFilter) {
         when (selectedFilter) {
@@ -994,69 +999,228 @@ fun TasksScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 200.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
-        ) {
-            item {
-                Column {
-                    Text(
-                        "Daily Missions",
-                        style = MaterialTheme.typography.displaySmall,
-                        fontWeight = FontWeight.Black,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FilterChip(
-                            selected = selectedFilter == 0,
-                            onClick = { selectedFilter = 0 },
-                            label = { Text("All (${tasks.size})") }
-                        )
-                        FilterChip(
-                            selected = selectedFilter == 1,
-                            onClick = { selectedFilter = 1 },
-                            label = { Text("Active (${tasks.count { !it.isCompleted }})") }
-                        )
-                        FilterChip(
-                            selected = selectedFilter == 2,
-                            onClick = { selectedFilter = 2 },
-                            label = { Text("Done (${tasks.count { it.isCompleted }})") }
+        Column(modifier = Modifier.fillMaxSize()) {
+            PrimaryTabRow(
+                selectedTabIndex = selectedTab,
+                containerColor = Color.Transparent,
+                divider = {}
+            ) {
+                Tab(
+                    selected = selectedTab == 0,
+                    onClick = { selectedTab = 0 },
+                    text = { Text("Missions", fontWeight = FontWeight.Bold) }
+                )
+                Tab(
+                    selected = selectedTab == 1,
+                    onClick = { selectedTab = 1 },
+                    text = { Text("Meal Log", fontWeight = FontWeight.Bold) }
+                )
+            }
+
+            if (selectedTab == 0) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 200.dp),
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                ) {
+                    item {
+                        Column {
+                            Text(
+                                "Daily Missions",
+                                style = MaterialTheme.typography.displaySmall,
+                                fontWeight = FontWeight.Black,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                FilterChip(
+                                    selected = selectedFilter == 0,
+                                    onClick = { selectedFilter = 0 },
+                                    label = { Text("All (${tasks.size})") }
+                                )
+                                FilterChip(
+                                    selected = selectedFilter == 1,
+                                    onClick = { selectedFilter = 1 },
+                                    label = { Text("Active (${tasks.count { !it.isCompleted }})") }
+                                )
+                                FilterChip(
+                                    selected = selectedFilter == 2,
+                                    onClick = { selectedFilter = 2 },
+                                    label = { Text("Done (${tasks.count { it.isCompleted }})") }
+                                )
+                            }
+                        }
+                    }
+                    
+                    items(
+                        count = filteredTasks.size,
+                        key = { filteredTasks[it].id }
+                    ) { index ->
+                        val task = filteredTasks[index]
+                        TaskCard(
+                            task = task, 
+                            onHold = { onTaskHold(task.id) }, 
+                            onTap = { onTaskTap(task.id) },
+                            onReset = { onTaskReset(task.id) },
+                            onDelete = { onTaskDelete(task.id) },
+                            newlyAddedTaskId = newlyAddedTaskId,
+                            onClearNewlyAdded = onClearNewlyAdded
                         )
                     }
                 }
-            }
-            
-            items(
-                count = filteredTasks.size,
-                key = { filteredTasks[it].id }
-            ) { index ->
-                val task = filteredTasks[index]
-                TaskCard(
-                    task = task, 
-                    onHold = { onTaskHold(task.id) }, 
-                    onTap = { onTaskTap(task.id) },
-                    onReset = { onTaskReset(task.id) },
-                    onDelete = { onTaskDelete(task.id) },
-                    newlyAddedTaskId = newlyAddedTaskId,
-                    onClearNewlyAdded = onClearNewlyAdded
-                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 200.dp),
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                ) {
+                    item {
+                        Column {
+                            Text(
+                                "Meal Log",
+                                style = MaterialTheme.typography.displaySmall,
+                                fontWeight = FontWeight.Black,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                "Total Calories Today: ${loggedMeals.sumOf { it.calories }} kcal",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    
+                    if (loggedMeals.isEmpty()) {
+                        item {
+                            Text(
+                                "No meals logged yet. Use the Bushy AI Camera to scan and log your food!",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 32.dp)
+                            )
+                        }
+                    } else {
+                        items(
+                            count = loggedMeals.size,
+                            key = { loggedMeals[it].id }
+                        ) { index ->
+                            val meal = loggedMeals[index]
+                            MealCard(
+                                meal = meal,
+                                onDelete = { onMealDelete(meal.id) }
+                            )
+                        }
+                    }
+                }
             }
         }
 
         // MEGA ADD BUTTON
-        LargeFloatingActionButton(
-            onClick = onAddTask,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(bottom = 140.dp, end = 24.dp)
-                .size(92.dp),
-            containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary,
-            shape = MaterialExpressiveShapes.cookie9
-        ) {
-            Icon(Icons.Default.Add, "Add Mission", modifier = Modifier.size(48.dp))
+        if (selectedTab == 0) {
+            LargeFloatingActionButton(
+                onClick = onAddTask,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(bottom = 140.dp, end = 24.dp)
+                    .size(92.dp),
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                shape = MaterialExpressiveShapes.cookie9
+            ) {
+                Icon(Icons.Default.Add, "Add Mission", modifier = Modifier.size(48.dp))
+            }
+        }
+    }
+}
+
+@Composable
+fun MealCard(
+    meal: com.bushy.health.LoggedMeal,
+    onDelete: () -> Unit
+) {
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        )
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = meal.name,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                IconButton(onClick = onDelete) {
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = "Delete Meal",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text(
+                        "Calories",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        "${meal.calories} kcal",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Black,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+                Column {
+                    Text(
+                        "Protein",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        "${meal.proteinGrams}g",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Black
+                    )
+                }
+                Column {
+                    Text(
+                        "Carbs",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        "${meal.carbsGrams}g",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Black
+                    )
+                }
+                Column {
+                    Text(
+                        "Fat",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        "${meal.fatGrams}g",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Black
+                    )
+                }
+            }
         }
     }
 }
@@ -1745,7 +1909,7 @@ fun AvatarOption(
     OutlinedCard(
         onClick = { onSelect(type) },
         modifier = modifier.aspectRatio(0.8f),
-        shape = MaterialExpressiveShapes.cookie4
+        shape = MaterialTheme.shapes.extraLarge
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
