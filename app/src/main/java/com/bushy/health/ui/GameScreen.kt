@@ -168,7 +168,7 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
                 modifier = Modifier
                     .fillMaxSize()
                     .nestedScroll(nestedScrollConnection),
-                beyondViewportPageCount = 1
+                beyondViewportPageCount = 2
             ) { page ->
                 Box(
                     modifier = Modifier
