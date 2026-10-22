@@ -1155,7 +1155,7 @@ fun TasksScreen(
                 onClick = onAddTask,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(bottom = 140.dp, end = 24.dp)
+                    .padding(bottom = 156.dp, end = 24.dp)
                     .size(92.dp),
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
