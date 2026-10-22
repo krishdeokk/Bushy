@@ -492,24 +492,7 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
                     enter = fadeIn(spring(stiffness = Spring.StiffnessMediumLow)) + scaleIn(spring(dampingRatio = 0.8f, stiffness = Spring.StiffnessMediumLow)),
                     exit = fadeOut(spring(stiffness = Spring.StiffnessMediumLow)) + scaleOut(spring(stiffness = Spring.StiffnessMediumLow))
                 ) {
-                    Surface(
-                        onClick = {
-                            performSubtleClick()
-                            scope.launch {
-                                isTappedPulse = true
-                                delay(250)
-                                isTappedPulse = false
-                            }
-                        },
-                        color = MaterialTheme.colorScheme.surface,
-                        shape = CircleShape,
-                        border = BorderStroke(
-                            width = 2.dp,
-                            color = if (uiState.visualStyle == VisualStyle.MONOCHROME) 
-                                MaterialTheme.colorScheme.onBackground
-                            else 
-                                MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)
-                        ),
+                    Row(
                         modifier = Modifier
                             .pointerInput(Unit) {
                                 detectHorizontalDragGestures(
@@ -549,38 +532,88 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
                             }
                             .wrapContentWidth()
                             .height(86.dp),
-                        shadowElevation = 0.dp,
-                        tonalElevation = 0.dp
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .padding(8.dp)
-                                .wrapContentWidth()
-                                .fillMaxHeight(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        // Main Navigation Pill
+                        Surface(
+                            color = MaterialTheme.colorScheme.surface,
+                            shape = CircleShape,
+                            border = BorderStroke(
+                                width = 2.dp,
+                                color = if (uiState.visualStyle == VisualStyle.MONOCHROME) 
+                                    MaterialTheme.colorScheme.onBackground
+                                else 
+                                    MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)
+                            ),
+                            modifier = Modifier.fillMaxHeight(),
+                            shadowElevation = 0.dp,
+                            tonalElevation = 0.dp
                         ) {
-                            PillTabItem(
-                                selected = pagerState.currentPage == 0,
-                                onClick = { onPillClick(0) },
-                                label = "Home",
-                                icon = Icons.Default.Home,
-                                selectedColor = MaterialTheme.colorScheme.primary
-                            )
-                            PillTabItem(
-                                selected = pagerState.currentPage == 1,
-                                onClick = { onPillClick(1) },
-                                label = "Tasks",
-                                icon = Icons.AutoMirrored.Filled.Assignment,
-                                selectedColor = MaterialTheme.colorScheme.primary
-                            )
-                            PillTabItem(
-                                selected = pagerState.currentPage == 2,
-                                onClick = { onPillClick(2) },
-                                label = "Bushy",
-                                icon = Icons.Default.AutoAwesome,
-                                selectedColor = MaterialTheme.colorScheme.primary
-                            )
+                            Row(
+                                modifier = Modifier
+                                    .padding(8.dp)
+                                    .wrapContentWidth()
+                                    .fillMaxHeight(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                PillTabItem(
+                                    selected = pagerState.currentPage == 0,
+                                    onClick = { onPillClick(0) },
+                                    label = "Home",
+                                    icon = Icons.Default.Home,
+                                    selectedColor = MaterialTheme.colorScheme.primary
+                                )
+                                PillTabItem(
+                                    selected = pagerState.currentPage == 1,
+                                    onClick = { onPillClick(1) },
+                                    label = "Tasks",
+                                    icon = Icons.AutoMirrored.Filled.Assignment,
+                                    selectedColor = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+
+                        // Bushy AI Separated FAB
+                        val aiSelected = pagerState.currentPage == 2
+                        val aiBgColor by animateColorAsState(
+                            targetValue = if (aiSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+                            animationSpec = spring(dampingRatio = 0.7f, stiffness = 800f)
+                        )
+                        val aiContentColor by animateColorAsState(
+                            targetValue = if (aiSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                            animationSpec = spring(dampingRatio = 0.7f, stiffness = 800f)
+                        )
+
+                        Surface(
+                            onClick = { onPillClick(2) },
+                            color = aiBgColor,
+                            contentColor = aiContentColor,
+                            shape = RoundedCornerShape(24.dp), // Squircle shape like the image
+                            border = BorderStroke(
+                                width = 2.dp,
+                                color = if (uiState.visualStyle == VisualStyle.MONOCHROME) 
+                                    MaterialTheme.colorScheme.onBackground
+                                else 
+                                    MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)
+                            ),
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .aspectRatio(1f),
+                            shadowElevation = 0.dp,
+                            tonalElevation = 0.dp
+                        ) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    Icons.Default.AutoAwesome, 
+                                    contentDescription = "Bushy AI",
+                                    modifier = Modifier.size(32.dp)
+                                )
+                            }
                         }
                     }
                 }
