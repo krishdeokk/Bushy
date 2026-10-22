@@ -597,12 +597,12 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
 
                         // Universal FAB Menu
                         Box(contentAlignment = Alignment.BottomCenter) {
-                            Box(modifier = Modifier.requiredSize(0.dp), contentAlignment = Alignment.BottomEnd) {
+                            Box(contentAlignment = Alignment.BottomCenter) {
                                 androidx.compose.animation.AnimatedVisibility(
                                     visible = isFabMenuExpanded,
                                     enter = fadeIn(spring(stiffness = Spring.StiffnessMediumLow)) + scaleIn(initialScale = 0.8f, animationSpec = spring(dampingRatio = 0.6f, stiffness = 800f)),
                                     exit = fadeOut(spring(stiffness = Spring.StiffnessMediumLow)) + scaleOut(targetScale = 0.8f, animationSpec = spring(stiffness = Spring.StiffnessMediumLow)),
-                                    modifier = Modifier.offset(y = (-56).dp)
+                                    modifier = Modifier.offset(y = (-100).dp)
                                 ) {
                                     Column(
                                         verticalArrangement = Arrangement.spacedBy(16.dp),
