@@ -597,16 +597,18 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
 
                         // Universal FAB Menu
                         Box(contentAlignment = Alignment.BottomCenter) {
+                            // The popup menu options
                             androidx.compose.animation.AnimatedVisibility(
                                 visible = isFabMenuExpanded,
                                 enter = fadeIn(spring(stiffness = Spring.StiffnessMediumLow)) + scaleIn(initialScale = 0.8f, animationSpec = spring(dampingRatio = 0.6f, stiffness = 800f)),
                                 exit = fadeOut(spring(stiffness = Spring.StiffnessMediumLow)) + scaleOut(targetScale = 0.8f, animationSpec = spring(stiffness = Spring.StiffnessMediumLow)),
-                                modifier = Modifier.padding(bottom = 100.dp) // Lift menu ABOVE the FAB
+                                modifier = Modifier
+                                    .align(Alignment.TopCenter)
+                                    .offset(y = (-72).dp) // Exactly place the menu completely outside and above the box
                             ) {
                                 Column(
                                     verticalArrangement = Arrangement.spacedBy(16.dp),
                                     horizontalAlignment = Alignment.End,
-                                    modifier = Modifier.padding(bottom = 8.dp)
                                 ) {
                                     // Bushy AI Option
                                     Row(
