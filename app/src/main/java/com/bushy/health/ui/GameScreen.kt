@@ -620,62 +620,30 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
                                         horizontalAlignment = Alignment.End,
                                     ) {
                                         // Bushy AI Option
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically, 
-                                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                        ) {
-                                            Surface(
-                                                shape = RoundedCornerShape(8.dp), 
-                                                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                                shadowElevation = 2.dp
-                                            ) {
-                                                Text(
-                                                    "Bushy AI", 
-                                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp), 
-                                                    style = MaterialTheme.typography.labelLarge
-                                                )
-                                            }
-                                            SmallFloatingActionButton(
-                                                onClick = { 
-                                                    isFabMenuExpanded = false
-                                                    onPillClick(2)
-                                                },
-                                                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                                contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                                                shape = CircleShape
-                                            ) {
-                                                Icon(Icons.Rounded.Cloud, contentDescription = "Bushy AI")
-                                            }
-                                        }
+                                        ExtendedFloatingActionButton(
+                                            onClick = { 
+                                                isFabMenuExpanded = false
+                                                onPillClick(2)
+                                            },
+                                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                                            shape = CircleShape,
+                                            icon = { Icon(Icons.Rounded.Cloud, contentDescription = "Bushy AI") },
+                                            text = { Text("Bushy AI", fontWeight = FontWeight.Bold) }
+                                        )
                                         
                                         // Add Mission Option
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically, 
-                                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                        ) {
-                                            Surface(
-                                                shape = RoundedCornerShape(8.dp), 
-                                                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                                shadowElevation = 2.dp
-                                            ) {
-                                                Text(
-                                                    "Add Mission", 
-                                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp), 
-                                                    style = MaterialTheme.typography.labelLarge
-                                                )
-                                            }
-                                            SmallFloatingActionButton(
-                                                onClick = {
-                                                    isFabMenuExpanded = false
-                                                    showAddTaskDialog = true
-                                                },
-                                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                                                shape = CircleShape
-                                            ) {
-                                                Icon(Icons.AutoMirrored.Rounded.Assignment, contentDescription = "Add Mission")
-                                            }
-                                        }
+                                        ExtendedFloatingActionButton(
+                                            onClick = {
+                                                isFabMenuExpanded = false
+                                                showAddTaskDialog = true
+                                            },
+                                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                            shape = CircleShape,
+                                            icon = { Icon(Icons.AutoMirrored.Rounded.Assignment, contentDescription = "Add Mission") },
+                                            text = { Text("Add Mission", fontWeight = FontWeight.Bold) }
+                                        )
                                     }
                                 }
                             }
