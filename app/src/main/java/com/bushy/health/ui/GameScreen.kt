@@ -1235,13 +1235,13 @@ fun PillTabItem(
     selectedColor: Color
 ) {
     val animatedBgColor by animateColorAsState(
-        targetValue = if (selected) selectedColor else Color.Transparent,
+        targetValue = if (selected) selectedColor.copy(alpha = 0.2f) else Color.Transparent,
         animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
         label = "PillTabBgColor"
     )
 
     val animatedContentColor by animateColorAsState(
-        targetValue = if (selected) contentColorFor(selectedColor) else MaterialTheme.colorScheme.onSurfaceVariant,
+        targetValue = if (selected) selectedColor else MaterialTheme.colorScheme.onSurfaceVariant,
         animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
         label = "PillTabContentColor"
     )
@@ -1252,15 +1252,24 @@ fun PillTabItem(
         contentColor = animatedContentColor,
         shape = CircleShape,
         modifier = modifier
-            .padding(2.dp)
-            .aspectRatio(1f)
-            .fillMaxHeight()
+            .padding(4.dp)
+            .height(64.dp)
+            .animateContentSize(animationSpec = spring(stiffness = Spring.StiffnessMediumLow))
     ) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
+        Row(
+            modifier = Modifier.padding(horizontal = if (selected) 24.dp else 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
         ) {
             Icon(icon, contentDescription = label, modifier = Modifier.size(28.dp))
+            AnimatedVisibility(visible = selected) {
+                Text(
+                    text = label,
+                    modifier = Modifier.padding(start = 12.dp),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
     }
 }
