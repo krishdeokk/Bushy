@@ -1,0 +1,243 @@
+import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#endif
+
+public struct StoryShareView: View {
+    @ObservedObject var viewModel: GameViewModel
+    @Environment(\.dismiss) private var dismiss
+    
+    #if os(iOS)
+    @State private var renderedImage: UIImage? = nil
+    #endif
+    @State private var showShareSheet: Bool = false
+    
+    private var isMono: Bool {
+        viewModel.uiState.visualStyle == .monochrome
+    }
+    
+    public var body: some View {
+        NavigationStack {
+            VStack(spacing: 20) {
+                // The Story Card (9:16 aspect ratio preview)
+                storyCardContent
+                    .frame(maxWidth: 320)
+                    .aspectRatio(9/16, contentMode: .fit)
+                    .clipShape(RoundedRectangle(cornerRadius: 32))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 32)
+                            .stroke(isMono ? Color.primary.opacity(0.3) : Color.clear, lineWidth: 1.5)
+                    )
+                    .shadow(color: Color.black.opacity(isMono ? 0.35 : 0.18), radius: 16, x: 0, y: 8)
+                    .padding(.top, 10)
+                
+                Spacer()
+                
+                // Share Action Button
+                Button {
+                    renderAndShare()
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "square.and.arrow.up.fill")
+                        Text("Share Story Card")
+                            .fontWeight(.bold)
+                    }
+                    .foregroundColor(isMono ? (viewModel.uiState.themeMode == .dark ? .black : .white) : .white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 54)
+                    .background(
+                        isMono ?
+                        LinearGradient(
+                            colors: [Color.primary, Color.primary.opacity(0.85)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        ) :
+                        LinearGradient(
+                            colors: [Color.pink, Color.purple, Color.orange],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .clipShape(Capsule())
+                    .padding(.horizontal, 32)
+                }
+                .padding(.bottom, 20)
+            }
+            .navigationTitle("Share Story")
+            #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+            #endif
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+            #if os(iOS)
+            .sheet(isPresented: $showShareSheet) {
+                if let image = renderedImage {
+                    ShareActivityView(activityItems: [image])
+                }
+            }
+            #endif
+        }
+    }
+    
+    // MARK: - Story Card Content
+    
+    private var storyCardContent: some View {
+        ZStack {
+            // Background Gradient
+            if isMono {
+                LinearGradient(
+                    colors: [
+                        Color(white: 0.08),
+                        Color(white: 0.14),
+                        Color(white: 0.05)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            } else {
+                LinearGradient(
+                    colors: [
+                        Color.accentColor.opacity(0.35),
+                        Color.bushyAppBackground,
+                        Color.purple.opacity(0.20)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            }
+            
+            // Decorative background circles
+            Circle()
+                .fill(isMono ? Color.white.opacity(0.04) : Color.accentColor.opacity(0.06))
+                .frame(width: 240, height: 240)
+                .offset(x: -80, y: -120)
+            
+            Circle()
+                .fill(isMono ? Color.white.opacity(0.03) : Color.purple.opacity(0.06))
+                .frame(width: 280, height: 280)
+                .offset(x: 100, y: 140)
+            
+            VStack(spacing: 14) {
+                Spacer().frame(height: 20)
+                
+                // Level Badge
+                Text("LEVEL \(viewModel.uiState.level)")
+                    .font(.caption)
+                    .fontWeight(.black)
+                    .foregroundColor(isMono ? .black : .white)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 6)
+                    .background(isMono ? Color.white : Color.accentColor)
+                    .clipShape(Capsule())
+                
+                Text(viewModel.uiState.userName.isEmpty ? "My Bushy Journey" : "\(viewModel.uiState.userName)'s Grind")
+                    .font(.title2)
+                    .fontWeight(.black)
+                    .foregroundColor(isMono ? .white : .primary)
+                    .multilineTextAlignment(.center)
+                
+                // Progress Bar
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(isMono ? Color.white.opacity(0.2) : Color.secondary.opacity(0.2)).frame(height: 6)
+                        Capsule().fill(isMono ? Color.white : Color.accentColor).frame(width: geo.size.width * CGFloat(viewModel.uiState.levelProgress), height: 6)
+                    }
+                }
+                .frame(width: 140, height: 6)
+                
+                Spacer()
+                
+                // Hero Bloub Avatar
+                BloubAvatarView(
+                    expression: viewModel.uiState.expression,
+                    visualStyle: viewModel.uiState.visualStyle,
+                    themeMode: viewModel.uiState.themeMode
+                )
+                .frame(width: 180, height: 180)
+                
+                Spacer()
+                
+                // Stats 2x2 Grid
+                VStack(spacing: 8) {
+                    HStack(spacing: 8) {
+                        miniStat(icon: "figure.walk", value: "\(viewModel.uiState.steps)", label: "Steps")
+                        miniStat(icon: "flame.fill", value: "\(viewModel.uiState.calories)", label: "Calories")
+                    }
+                    HStack(spacing: 8) {
+                        miniStat(icon: "figure.strengthtraining.traditional", value: "\(viewModel.uiState.pushups)", label: "Pushups")
+                        miniStat(icon: "bolt.fill", value: "\(viewModel.uiState.streakDays) Days", label: "Streak")
+                    }
+                }
+                .padding(.horizontal, 20)
+                
+                Spacer()
+                
+                // App Branding Footer
+                HStack(spacing: 6) {
+                    Text("Bushy ☁️")
+                        .font(.headline)
+                        .fontWeight(.black)
+                        .foregroundColor(isMono ? .white : .primary)
+                    Text("• Turn your grind into a game")
+                        .font(.caption2)
+                        .foregroundColor(isMono ? Color(white: 0.6) : .secondary)
+                }
+                .padding(.bottom, 24)
+            }
+        }
+    }
+    
+    private func miniStat(icon: String, value: String, label: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.system(size: 14, weight: .bold))
+                .foregroundColor(isMono ? .white : .accentColor)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(value)
+                    .font(.system(size: 15, weight: .black, design: .rounded))
+                    .foregroundColor(isMono ? .white : .primary)
+                Text(label)
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(isMono ? Color(white: 0.6) : .secondary)
+            }
+            Spacer()
+        }
+        .padding(10)
+        .background(isMono ? Color(white: 0.16) : Color.bushyCardBackground.opacity(0.8))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(isMono ? Color.white.opacity(0.12) : Color.clear, lineWidth: 1)
+        )
+    }
+    
+    @MainActor
+    private func renderAndShare() {
+        #if os(iOS)
+        let renderer = ImageRenderer(content: storyCardContent.frame(width: 360, height: 640))
+        renderer.scale = 3.0
+        if let uiImage = renderer.uiImage {
+            self.renderedImage = uiImage
+            self.showShareSheet = true
+        }
+        #endif
+    }
+}
+
+#if os(iOS)
+public struct ShareActivityView: UIViewControllerRepresentable {
+    public let activityItems: [Any]
+    public let applicationActivities: [UIActivity]? = nil
+    
+    public func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: activityItems, applicationActivities: applicationActivities)
+    }
+    
+    public func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+}
+#endif
