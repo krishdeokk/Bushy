@@ -1236,20 +1236,14 @@ fun PillTabItem(
 ) {
     val animatedBgColor by animateColorAsState(
         targetValue = if (selected) selectedColor.copy(alpha = 0.2f) else Color.Transparent,
-        animationSpec = androidx.compose.animation.core.tween(150, easing = androidx.compose.animation.core.FastOutSlowInEasing),
+        animationSpec = spring(dampingRatio = 0.7f, stiffness = 800f),
         label = "PillTabBgColor"
     )
 
     val animatedContentColor by animateColorAsState(
         targetValue = if (selected) selectedColor else MaterialTheme.colorScheme.onSurfaceVariant,
-        animationSpec = androidx.compose.animation.core.tween(150, easing = androidx.compose.animation.core.FastOutSlowInEasing),
-        label = "PillTabContentColor"
-    )
-
-    val dynamicPadding by animateDpAsState(
-        targetValue = if (selected) 24.dp else 16.dp,
         animationSpec = spring(dampingRatio = 0.7f, stiffness = 800f),
-        label = "PillTabPadding"
+        label = "PillTabContentColor"
     )
 
     Surface(
@@ -1263,16 +1257,12 @@ fun PillTabItem(
             .animateContentSize(animationSpec = spring(dampingRatio = 0.7f, stiffness = 800f))
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = dynamicPadding),
+            modifier = Modifier.padding(horizontal = if (selected) 24.dp else 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
             Icon(icon, contentDescription = label, modifier = Modifier.size(28.dp))
-            AnimatedVisibility(
-                visible = selected,
-                enter = expandHorizontally(animationSpec = spring(dampingRatio = 0.7f, stiffness = 800f)) + fadeIn(animationSpec = androidx.compose.animation.core.tween(200)),
-                exit = shrinkHorizontally(animationSpec = spring(dampingRatio = 0.7f, stiffness = 800f)) + fadeOut(animationSpec = androidx.compose.animation.core.tween(150))
-            ) {
+            AnimatedVisibility(visible = selected) {
                 Text(
                     text = label,
                     modifier = Modifier.padding(start = 12.dp),
