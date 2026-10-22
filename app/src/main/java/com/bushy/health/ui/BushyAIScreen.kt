@@ -239,30 +239,28 @@ fun BushyAIScreen(
                     }
                 }
 
-                Row(
-                    modifier = Modifier.align(Alignment.CenterEnd),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    if (messages.isNotEmpty()) {
-                        IconButton(
-                            onClick = { viewModel.clearChatHistory() }
-                        ) {
-                            Icon(
-                                Icons.Default.Delete,
-                                contentDescription = "Clear Chat History",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
+                if (messages.isNotEmpty()) {
                     IconButton(
-                        onClick = { showModelSettingsSheet = true }
+                        onClick = { viewModel.clearChatHistory() },
+                        modifier = Modifier.align(Alignment.CenterStart)
                     ) {
                         Icon(
-                            Icons.Default.Tune,
-                            contentDescription = "AI Model Settings",
-                            tint = MaterialTheme.colorScheme.primary
+                            Icons.Default.Delete,
+                            contentDescription = "Clear Chat History",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+                }
+
+                IconButton(
+                    onClick = { showModelSettingsSheet = true },
+                    modifier = Modifier.align(Alignment.CenterEnd)
+                ) {
+                    Icon(
+                        Icons.Default.Tune,
+                        contentDescription = "AI Model Settings",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
                 }
             }
         }
