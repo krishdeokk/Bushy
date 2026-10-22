@@ -609,7 +609,7 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    Icons.Default.AutoAwesome, 
+                                    Icons.Default.Cloud, 
                                     contentDescription = "Bushy AI",
                                     modifier = Modifier.size(32.dp)
                                 )
