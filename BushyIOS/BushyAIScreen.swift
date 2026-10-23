@@ -20,7 +20,7 @@ public struct BushyAIScreen: View {
                 // Messages Scroll View
                 ScrollViewReader { proxy in
                     ScrollView(showsIndicators: false) {
-                        LazyVStack(spacing: 16) {
+                        LazyVStack(spacing: 14) {
                             ForEach(aiViewModel.messages) { msg in
                                 messageRow(msg)
                             }
@@ -36,7 +36,7 @@ public struct BushyAIScreen: View {
                     }
                     .onChange(of: aiViewModel.messages.count) {
                         if let last = aiViewModel.messages.last {
-                            withAnimation {
+                            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                                 proxy.scrollTo(last.id, anchor: .bottom)
                             }
                         }
@@ -56,12 +56,11 @@ public struct BushyAIScreen: View {
     
     private var headerBar: some View {
         HStack(spacing: 12) {
-            BloubAvatarView(
-                expression: .happy,
-                visualStyle: .monochrome,
-                themeMode: gameViewModel.uiState.themeMode
-            )
-            .frame(width: 44, height: 44)
+            Image(systemName: "sparkles")
+                .font(.system(size: 16, weight: .bold))
+                .foregroundColor(.primary)
+                .frame(width: 38, height: 38)
+                .liquidGlassCircle()
             
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
@@ -98,46 +97,38 @@ public struct BushyAIScreen: View {
     // MARK: - Message Row
     
     private func messageRow(_ msg: BushyAIMessage) -> some View {
-        HStack(alignment: .bottom, spacing: 8) {
+        HStack(alignment: .bottom, spacing: 0) {
             if msg.isUser {
-                Spacer(minLength: 40)
-            } else {
-                BloubAvatarView(expression: .attentive, visualStyle: .monochrome)
-                    .frame(width: 32, height: 32)
+                Spacer(minLength: 48)
             }
             
-            VStack(alignment: msg.isUser ? .trailing : .leading, spacing: 4) {
-                Text(msg.text)
-                    .font(.system(size: 15))
-                    .foregroundColor(msg.isUser ? Color.bushyAppBackground : .primary)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .background(
-                        msg.isUser ?
-                        AnyShapeStyle(Color.primary) :
-                        AnyShapeStyle(.ultraThinMaterial)
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .stroke(Color.white.opacity(msg.isUser ? 0.35 : 0.25), lineWidth: 1)
-                    )
-                    .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
-            }
+            Text(msg.text)
+                .font(.system(size: 15))
+                .foregroundColor(msg.isUser ? Color.bushyAppBackground : .primary)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(
+                    msg.isUser ?
+                    AnyShapeStyle(Color.primary) :
+                    AnyShapeStyle(.ultraThinMaterial)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .stroke(Color.white.opacity(msg.isUser ? 0.35 : 0.25), lineWidth: 1)
+                )
+                .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
             
             if !msg.isUser {
-                Spacer(minLength: 40)
+                Spacer(minLength: 48)
             }
         }
         .id(msg.id)
     }
     
     private var typingIndicator: some View {
-        HStack(spacing: 8) {
-            BloubAvatarView(expression: .thinking, visualStyle: .monochrome)
-                .frame(width: 32, height: 32)
-            
-            HStack(spacing: 4) {
+        HStack(spacing: 0) {
+            HStack(spacing: 5) {
                 Circle().fill(Color.secondary).frame(width: 6, height: 6)
                 Circle().fill(Color.secondary).frame(width: 6, height: 6)
                 Circle().fill(Color.secondary).frame(width: 6, height: 6)
@@ -146,7 +137,7 @@ public struct BushyAIScreen: View {
             .padding(.vertical, 12)
             .liquidGlassPill()
             
-            Spacer()
+            Spacer(minLength: 48)
         }
     }
     
