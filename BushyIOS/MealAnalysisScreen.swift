@@ -1,6 +1,6 @@
 import SwiftUI
 
-public struct MealAnalysisView: View {
+public struct MealAnalysisScreen: View {
     @ObservedObject var gameViewModel: GameViewModel
     @ObservedObject var aiViewModel: BushyAIViewModel
     @Environment(\.dismiss) private var dismiss
@@ -10,6 +10,11 @@ public struct MealAnalysisView: View {
     @State private var quantity: Double = 1.0
     @State private var selectedPrepStyle: PrepStyle = .standard
     @State private var currentItem: EditableFoodItem? = nil
+    
+    public init(gameViewModel: GameViewModel, aiViewModel: BushyAIViewModel) {
+        self.gameViewModel = gameViewModel
+        self.aiViewModel = aiViewModel
+    }
     
     public var body: some View {
         NavigationStack {
@@ -316,3 +321,6 @@ public struct MealAnalysisView: View {
         self.currentItem = item
     }
 }
+
+// Backwards-compatible alias for existing call-sites
+public typealias MealAnalysisView = MealAnalysisScreen

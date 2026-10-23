@@ -1,6 +1,6 @@
 import SwiftUI
 
-public struct BloubAvatarView: View {
+public struct BloubAvatar: View {
     public var expression: AvatarExpression
     public var visualStyle: VisualStyle
     public var themeMode: ThemeMode
@@ -81,3 +81,6 @@ public struct BloubAvatarView: View {
         }
     }
 }
+
+// Backwards-compatible alias
+public typealias BloubAvatarView = BloubAvatar

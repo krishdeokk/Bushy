@@ -76,10 +76,10 @@ public struct GameScreen: View {
             AddTaskSheet(viewModel: viewModel)
         }
         .sheet(isPresented: $showScanMealSheet) {
-            MealAnalysisView(gameViewModel: viewModel, aiViewModel: aiViewModel)
+            MealAnalysisScreen(gameViewModel: viewModel, aiViewModel: aiViewModel)
         }
         .sheet(isPresented: $showShareSheet) {
-            StoryShareView(viewModel: viewModel)
+            StoryShare(viewModel: viewModel)
         }
         .sheet(isPresented: $showSwitchHeroSheet) {
             SwitchHeroSheet(viewModel: viewModel)

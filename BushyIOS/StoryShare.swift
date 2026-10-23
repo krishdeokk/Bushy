@@ -3,7 +3,7 @@ import SwiftUI
 import UIKit
 #endif
 
-public struct StoryShareView: View {
+public struct StoryShare: View {
     @ObservedObject var viewModel: GameViewModel
     @Environment(\.dismiss) private var dismiss
     
@@ -11,6 +11,10 @@ public struct StoryShareView: View {
     @State private var renderedImage: UIImage? = nil
     #endif
     @State private var showShareSheet: Bool = false
+    
+    public init(viewModel: GameViewModel) {
+        self.viewModel = viewModel
+    }
     
     public var body: some View {
         NavigationStack {
@@ -125,7 +129,7 @@ public struct StoryShareView: View {
                 Spacer()
                 
                 // Hero Bloub Avatar
-                BloubAvatarView(
+                BloubAvatar(
                     expression: viewModel.uiState.expression,
                     visualStyle: .monochrome,
                     themeMode: viewModel.uiState.themeMode
@@ -201,10 +205,18 @@ public struct StoryShareView: View {
     }
 }
 
+// Backwards-compatible alias for existing call-sites
+public typealias StoryShareView = StoryShare
+
 #if os(iOS)
 public struct ShareActivityView: UIViewControllerRepresentable {
     public var activityItems: [Any]
     public var applicationActivities: [UIActivity]? = nil
+    
+    public init(activityItems: [Any], applicationActivities: [UIActivity]? = nil) {
+        self.activityItems = activityItems
+        self.applicationActivities = applicationActivities
+    }
     
     public func makeUIViewController(context: Context) -> UIActivityViewController {
         UIActivityViewController(activityItems: activityItems, applicationActivities: applicationActivities)
