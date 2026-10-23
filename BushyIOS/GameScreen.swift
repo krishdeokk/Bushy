@@ -57,7 +57,7 @@ public struct GameScreen: View {
             #endif
             .ignoresSafeArea(edges: .bottom)
             
-            // Dynamic Floating Navigation Pill
+            // Dynamic Floating Navigation Pill & Anchored Actions Menu
             NavigationPill(
                 selectedTab: $selectedTab,
                 visualStyle: viewModel.uiState.visualStyle,
@@ -71,7 +71,6 @@ public struct GameScreen: View {
                     showShareSheet = true
                 }
             )
-            .padding(.bottom, 16)
         }
         .sheet(isPresented: $showAddTaskSheet) {
             AddTaskSheet(viewModel: viewModel)
