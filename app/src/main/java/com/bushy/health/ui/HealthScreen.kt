@@ -622,18 +622,20 @@ fun HealthMainContent(uiState: UserStats, viewModel: HealthViewModel) {
 
                             val aiSelected = pagerState.currentPage == 2 && !isFabMenuExpanded
                             val fabBgColor by animateColorAsState(
-                                targetValue = if (isFabMenuExpanded || aiSelected)
-                                    MaterialTheme.colorScheme.onSurface
-                                else
-                                    MaterialTheme.colorScheme.surface,
+                                targetValue = if (isFabMenuExpanded || aiSelected) {
+                                    if (uiState.visualStyle == VisualStyle.MONOCHROME) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.primaryContainer
+                                } else {
+                                    MaterialTheme.colorScheme.surface
+                                },
                                 animationSpec = spring(dampingRatio = 0.7f, stiffness = 800f),
                                 label = "FabBgColor"
                             )
                             val fabContentColor by animateColorAsState(
-                                targetValue = if (isFabMenuExpanded || aiSelected)
-                                    MaterialTheme.colorScheme.surface
-                                else
-                                    MaterialTheme.colorScheme.onSurface,
+                                targetValue = if (isFabMenuExpanded || aiSelected) {
+                                    if (uiState.visualStyle == VisualStyle.MONOCHROME) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.onPrimaryContainer
+                                } else {
+                                    if (uiState.visualStyle == VisualStyle.MONOCHROME) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.primary
+                                },
                                 animationSpec = spring(dampingRatio = 0.7f, stiffness = 800f),
                                 label = "FabContentColor"
                             )
@@ -1305,9 +1307,23 @@ fun PillTabItem(
     modifier: Modifier = Modifier,
     visualStyle: VisualStyle = VisualStyle.MATERIAL3
 ) {
-    val selectedBgColor = MaterialTheme.colorScheme.onSurface
-    val selectedContentColor = MaterialTheme.colorScheme.surface
-    val unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+    val selectedBgColor = if (visualStyle == VisualStyle.MONOCHROME) {
+        MaterialTheme.colorScheme.onSurface
+    } else {
+        MaterialTheme.colorScheme.primaryContainer
+    }
+
+    val selectedContentColor = if (visualStyle == VisualStyle.MONOCHROME) {
+        MaterialTheme.colorScheme.surface
+    } else {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    }
+
+    val unselectedContentColor = if (visualStyle == VisualStyle.MONOCHROME) {
+        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+    }
 
     val animatedBgColor by animateColorAsState(
         targetValue = if (selected) selectedBgColor else Color.Transparent,
