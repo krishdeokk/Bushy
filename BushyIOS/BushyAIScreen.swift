@@ -14,7 +14,7 @@ public struct BushyAIScreen: View {
             LiquidFluidBackground(isMonochrome: true)
             
             VStack(spacing: 0) {
-                // Frosted Liquid Header Bar
+                // Frosted Liquid Header Bar with Bloub Avatar
                 headerBar
                 
                 // Messages Scroll View
@@ -52,15 +52,16 @@ public struct BushyAIScreen: View {
         }
     }
     
-    // MARK: - Header
+    // MARK: - Header (Bloub Avatar only in header)
     
     private var headerBar: some View {
         HStack(spacing: 12) {
-            Image(systemName: "sparkles")
-                .font(.system(size: 16, weight: .bold))
-                .foregroundColor(.primary)
-                .frame(width: 38, height: 38)
-                .liquidGlassCircle()
+            BloubAvatarView(
+                expression: .attentive,
+                visualStyle: .monochrome,
+                themeMode: gameViewModel.uiState.themeMode
+            )
+            .frame(width: 42, height: 42)
             
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
@@ -94,7 +95,7 @@ public struct BushyAIScreen: View {
         )
     }
     
-    // MARK: - Message Row
+    // MARK: - Message Row (Clean, no avatars)
     
     private func messageRow(_ msg: BushyAIMessage) -> some View {
         HStack(alignment: .bottom, spacing: 0) {
