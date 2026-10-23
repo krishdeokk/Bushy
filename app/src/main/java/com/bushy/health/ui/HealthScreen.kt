@@ -623,7 +623,7 @@ fun HealthMainContent(uiState: UserStats, viewModel: HealthViewModel) {
                             val aiSelected = pagerState.currentPage == 2 && !isFabMenuExpanded
                             val fabBgColor by animateColorAsState(
                                 targetValue = if (isFabMenuExpanded || aiSelected)
-                                    MaterialTheme.colorScheme.primaryContainer
+                                    MaterialTheme.colorScheme.onSurface
                                 else
                                     MaterialTheme.colorScheme.surface,
                                 animationSpec = spring(dampingRatio = 0.7f, stiffness = 800f),
@@ -631,11 +631,9 @@ fun HealthMainContent(uiState: UserStats, viewModel: HealthViewModel) {
                             )
                             val fabContentColor by animateColorAsState(
                                 targetValue = if (isFabMenuExpanded || aiSelected)
-                                    MaterialTheme.colorScheme.onPrimaryContainer
-                                else if (uiState.visualStyle == VisualStyle.MONOCHROME)
-                                    MaterialTheme.colorScheme.onSurface
+                                    MaterialTheme.colorScheme.surface
                                 else
-                                    MaterialTheme.colorScheme.primary,
+                                    MaterialTheme.colorScheme.onSurface,
                                 animationSpec = spring(dampingRatio = 0.7f, stiffness = 800f),
                                 label = "FabContentColor"
                             )
@@ -1307,23 +1305,9 @@ fun PillTabItem(
     modifier: Modifier = Modifier,
     visualStyle: VisualStyle = VisualStyle.MATERIAL3
 ) {
-    val selectedBgColor = if (visualStyle == VisualStyle.MONOCHROME) {
-        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.18f)
-    } else {
-        MaterialTheme.colorScheme.primary.copy(alpha = 0.22f)
-    }
-
-    val selectedContentColor = if (visualStyle == VisualStyle.MONOCHROME) {
-        MaterialTheme.colorScheme.onSurface
-    } else {
-        MaterialTheme.colorScheme.primary
-    }
-
-    val unselectedContentColor = if (visualStyle == VisualStyle.MONOCHROME) {
-        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-    } else {
-        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f)
-    }
+    val selectedBgColor = MaterialTheme.colorScheme.onSurface
+    val selectedContentColor = MaterialTheme.colorScheme.surface
+    val unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
 
     val animatedBgColor by animateColorAsState(
         targetValue = if (selected) selectedBgColor else Color.Transparent,
