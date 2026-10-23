@@ -1,12 +1,16 @@
 import SwiftUI
 
 public struct AddTaskSheet: View {
-    @ObservedObject var viewModel: GameViewModel
+    @ObservedObject var viewModel: HealthViewModel
     @Environment(\.dismiss) private var dismiss
     
     @State private var title: String = ""
     @State private var targetText: String = "20"
     @State private var selectedType: TaskType = .pushups
+    
+    public init(viewModel: HealthViewModel) {
+        self.viewModel = viewModel
+    }
     
     public var body: some View {
         NavigationStack {

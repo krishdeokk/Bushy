@@ -139,7 +139,7 @@ public final class BushyAIViewModel: ObservableObject {
         let interp = MultilingualDishInterpreter.interpretDishText(query)
         if let match = interp.bestMatch {
             return """
-            🍛 Nutrition for \(match.name):
+            🍲 Nutrition for \(match.name):
             • Calories: \(match.caloriesPer100g) kcal per 100g
             • Protein: \(match.proteinPer100g)g
             • Carbs: \(match.carbsPer100g)g
@@ -205,10 +205,10 @@ public final class BushyAIViewModel: ObservableObject {
     
     public func confirmAndSaveMeal(
         result: MealAnalysisResult,
-        gameViewModel: GameViewModel
+        healthViewModel: HealthViewModel
     ) {
         let totals = result.totalNutrients
-        gameViewModel.logMeal(
+        healthViewModel.logMeal(
             name: result.mealName,
             calories: totals.calories,
             protein: Int(totals.proteinG),

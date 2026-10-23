@@ -9,7 +9,7 @@
 - **Procedural Bloub Character Engine**: 64-radial Catmull-Rom spline deformation, dynamic 3D gaze tracking, harmonic breathing, and quintic-eased state machines rendered live via SwiftUI `Canvas` and `TimelineView`.
 - **Liquid Glass & High-Contrast Design System**: Multi-layered `.ultraThinMaterial` glass cards, specular highlights, dynamic ambient fluid background orbs, and full support for both Vibrant Material 3 and Ultra-Minimalist Monochrome styles.
 - **Offline Indian Nutrition & NLP Engine**: Multilingual food parsing (supporting Hindi/regional culinary names, dish preparation styles like *tadka*, *shallow fried*, *steamed*, and traditional serving units like *katori*, *plate*, *piece*).
-- **Offline Bushy AI Mentor**: Purely local rule-based and heuristic mentor answering nutrition questions, analyzing calorie budgets, and auto-synthesizing in-game quests on demand.
+- **Offline Bushy AI Mentor**: Purely local rule-based and heuristic mentor answering nutrition questions, analyzing calorie budgets, and auto-synthesizing in-app health quests on demand.
 - **Apple HealthKit Sync**: Real-time background query synchronization for daily step counts and active calorie burn.
 - **RPG Progression Loop**: Dynamic XP scaling curve, daily streak mechanics, level rewards, and interactive story card generator for social sharing.
 
@@ -88,9 +88,9 @@ $$h_{\text{lid}} = h_{\text{base}} \cdot \left(1.0 + \frac{\text{pitch}}{100.0}\
 
 ---
 
-### 2. Gamification & Progression Curve
+### 2. Health & Progression Curve
 
-Bushy uses a non-linear convex power function to scale XP requirements, balancing fast early-game gratification with long-term retention:
+Bushy uses a non-linear convex power function to scale XP requirements, balancing fast early-stage gratification with long-term retention:
 
 $$\text{XP}_{\text{required}}(L) = \left\lfloor 100 \cdot L^{1.4} \right\rfloor$$
 
@@ -114,64 +114,31 @@ $$\rho = \frac{\text{XP}_{\text{current}} - \text{XP}_{\text{floor}}(L)}{\text{X
 
 Indian meals present unique challenges for traditional fitness trackers due to non-standard serving sizes (*katori*, *roti*, *ladle*), regional synonyms (*phulka* vs *chapati*), and preparation variations (*tadka*, *fried*, *steamed*).
 
-#### Architecture of the Parser:
+#### Preparation Style Caloric Multipliers
+$$\text{Calories}_{\text{adjusted}} = \text{Calories}_{\text{base}} \cdot M_{\text{prep}}$$
 
-```
-[ User Input: "2 katori dal tadka with ghee" ]
-                        │
-                        ▼
-           [ Lexical Pre-processor ]
-         - Strip noise words ("with", "and", "of")
-         - Tokenize numeric quantities and fractions
-                        │
-                        ▼
-           [ Unit Extraction & Mapping ]
-         - "katori" ──► standard 150g volume unit
-         - Quantity multiplier = 2.0
-                        │
-                        ▼
-      [ Multilingual Synonym Resolution ]
-         - "dal tadka" ──► IndianDatabaseKey.YELLOW_DAL_TADKA
-                        │
-                        ▼
-          [ Preparation Modifier Scaling ]
-         - "ghee" ──► +5g Fat (+45 kcal)
-                        │
-                        ▼
-          [ Final Macronutrient Compute ]
-     Calories, Protein (g), Carbs (g), Fats (g)
-```
-
-#### Embedded Culinary Database Sample:
-| Item | Serving Unit | Base Calories | Protein | Carbs | Fat |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Roti / Chapati / Phulka** | 1 piece (~40g) | 104 kcal | 3.1g | 21.0g | 0.8g |
-| **Dal Tadka** | 1 katori (~150g) | 165 kcal | 8.5g | 22.0g | 4.8g |
-| **Paneer Bhurji** | 1 katori (~150g) | 265 kcal | 14.2g | 6.0g | 20.5g |
-| **Idli with Sambar** | 2 idli + sambar | 210 kcal | 6.8g | 38.0g | 2.5g |
-| **Chicken Biryani** | 1 plate (~300g) | 480 kcal | 26.0g | 55.0g | 16.0g |
+| Preparation Style | Multiplier ($M_{\text{prep}}$) | Typical Added Fat |
+| :--- | :--- | :--- |
+| **Boiled / Steamed** (e.g. Idli, Plain Rice) | $\times 0.90$ | Minimal to zero oil |
+| **Standard Homemade** (e.g. Regular Dal, Sabzi) | $\times 1.00$ | Moderate oil/ghee (1 tsp) |
+| **Tadka / Extra Ghee** (e.g. Dal Tadka, Ghee Roti) | $\times 1.25$ | Tempered with 1-2 tbsp ghee |
+| **Shallow Fried** (e.g. Paratha, Cutlet, Paneer Tikka) | $\times 1.35$ | Surface oil absorptive pan frying |
+| **Deep Fried** (e.g. Poori, Bhatura, Samosa, Pakora) | $\times 1.70$ | High oil absorption matrix |
 
 ---
 
-### 4. Liquid Glass UI Architecture
+## 🎨 Design Philosophy: Liquid Glass & Monochromatic Noir
 
-The interface uses a multi-pass compositing approach to achieve high-performance real-time glassmorphism on iOS without dropped frames:
+Bushy iOS features an ultra-sleek, minimalist aesthetic inspired by Apple's highest design standards:
 
 ```
 ┌────────────────────────────────────────────────────────┐
-│  Dynamic Fluid Layer (3 Drifting Radial Blurred Orbs) │
-└───────────────────────────┬────────────────────────────┘
-                            │
-┌───────────────────────────▼────────────────────────────┐
-│  Background Material (.ultraThinMaterial Blur Pass)   │
-└───────────────────────────┬────────────────────────────┘
-                            │
-┌───────────────────────────▼────────────────────────────┐
-│  Content Layer (Typography, Icons, Sliders)            │
-└───────────────────────────┬────────────────────────────┘
-                            │
-┌───────────────────────────▼────────────────────────────┐
-│  Specular Edge Rim (Angular LinearGradient Stroke)     │
+│  Glass Surface (.ultraThinMaterial, opacity: 0.85)     │
+│  ┌──────────────────────────────────────────────────┐  │
+│  │ Specular Gradient Stroke (Linear: White 0.35->0) │  │
+│  │ Inner Ambient Shadow                             │  │
+│  │ Responsive Haptic Surface Engine                 │  │
+│  └──────────────────────────────────────────────────┘  │
 └────────────────────────────────────────────────────────┘
 ```
 
@@ -189,23 +156,24 @@ BushyIOS/
 │   ├── DesignSystem.swift                 # Liquid Glass modifiers & Fluid Canvas background
 │   │
 │   ├── Avatar Engine/
-│   │   ├── BloubAvatarView.swift          # Live SwiftUI Canvas avatar renderer
+│   │   ├── BloubAvatar.swift              # Live SwiftUI Canvas avatar renderer
 │   │   ├── BloubEngine.swift              # Animation cycle, blinking, gaze, and sampling
 │   │   ├── BloubMath.swift                # Catmull-Rom splines, 64-radial math, & easings
 │   │   ├── BloubProfiles.swift            # Geometric morph targets (Cloud, Egg, Hexagon)
 │   │   └── BloubStates.swift              # Expression states (Neutral, Happy, Tired, etc.)
 │   │
 │   ├── Screens/
+│   │   ├── HealthScreen.swift             # Main tab navigator and container
 │   │   ├── HomeScreen.swift               # Dashboard: Avatar hero, stats, active missions
 │   │   ├── TasksScreen.swift              # Quests, macro tracking, logged meal history
 │   │   ├── BushyAIScreen.swift            # Offline conversational mentor & suggestions
-│   │   ├── MealAnalysisView.swift         # Food logger & Indian dish interpreter
-│   │   ├── StoryShareView.swift           # Social card export & render sheet
+│   │   ├── MealAnalysisScreen.swift       # Food logger & Indian dish interpreter
+│   │   ├── StoryShare.swift               # Social card export & render sheet
 │   │   ├── SetupScreen.swift              # Onboarding flow & preference selection
 │   │   └── SwitchHeroSheet.swift          # Avatar personality & morphology selector
 │   │
 │   ├── Core Architecture & Data/
-│   │   ├── GameViewModel.swift            # Main state manager (XP, quests, meals, theme)
+│   │   ├── HealthViewModel.swift          # Main state manager (XP, quests, meals, theme)
 │   │   ├── BushyAIViewModel.swift         # Offline NLP heuristic conversation engine
 │   │   ├── HealthManager.swift            # HealthKit HKHealthStore background queries
 │   │   ├── IndianNutritionDatabase.swift  # Pre-compiled Indian macro & food dictionary

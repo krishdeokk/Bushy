@@ -1,14 +1,14 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var viewModel = GameViewModel()
+    @StateObject private var viewModel = HealthViewModel()
     
     var body: some View {
         Group {
             if !viewModel.uiState.isSetupComplete {
                 SetupScreen(viewModel: viewModel)
             } else {
-                GameScreen(viewModel: viewModel)
+                HealthScreen(viewModel: viewModel)
             }
         }
         .tint(.primary)
@@ -22,8 +22,4 @@ struct ContentView: View {
         case .system: return nil
         }
     }
-}
-
-#Preview {
-    ContentView()
 }

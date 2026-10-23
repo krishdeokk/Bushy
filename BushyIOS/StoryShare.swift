@@ -4,7 +4,7 @@ import UIKit
 #endif
 
 public struct StoryShare: View {
-    @ObservedObject var viewModel: GameViewModel
+    @ObservedObject var viewModel: HealthViewModel
     @Environment(\.dismiss) private var dismiss
     
     #if os(iOS)
@@ -12,7 +12,7 @@ public struct StoryShare: View {
     #endif
     @State private var showShareSheet: Bool = false
     
-    public init(viewModel: GameViewModel) {
+    public init(viewModel: HealthViewModel) {
         self.viewModel = viewModel
     }
     
@@ -159,7 +159,7 @@ public struct StoryShare: View {
                         .font(.headline)
                         .fontWeight(.black)
                         .foregroundColor(.white)
-                    Text("• Turn your grind into a game")
+                    Text("• Turn your grind into health")
                         .font(.caption2)
                         .foregroundColor(Color(white: 0.6))
                 }

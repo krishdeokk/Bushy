@@ -1,10 +1,22 @@
 import SwiftUI
 
 public struct HomeScreen: View {
-    @ObservedObject var viewModel: GameViewModel
+    @ObservedObject var viewModel: HealthViewModel
     var onOpenQuests: () -> Void
     var onShare: () -> Void
     var onSwitchHero: () -> Void
+    
+    public init(
+        viewModel: HealthViewModel,
+        onOpenQuests: @escaping () -> Void,
+        onShare: @escaping () -> Void,
+        onSwitchHero: @escaping () -> Void
+    ) {
+        self.viewModel = viewModel
+        self.onOpenQuests = onOpenQuests
+        self.onShare = onShare
+        self.onSwitchHero = onSwitchHero
+    }
     
     public var body: some View {
         ZStack {
@@ -155,7 +167,7 @@ public struct HomeScreen: View {
                     .fill(Color.secondary.opacity(0.06))
                     .frame(width: 280, height: 280)
                 
-                BloubAvatarView(
+                BloubAvatar(
                     expression: viewModel.uiState.expression,
                     visualStyle: .monochrome,
                     themeMode: viewModel.uiState.themeMode,

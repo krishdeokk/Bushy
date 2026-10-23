@@ -2,7 +2,7 @@ import SwiftUI
 import Combine
 
 @MainActor
-public final class GameViewModel: ObservableObject {
+public final class HealthViewModel: ObservableObject {
     @Published public var uiState: UserStats = UserStats()
     
     private let statsKey = "com.bushy.health.user_stats"

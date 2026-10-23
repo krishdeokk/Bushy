@@ -1,9 +1,19 @@
 import SwiftUI
 
 public struct TasksScreen: View {
-    @ObservedObject var viewModel: GameViewModel
+    @ObservedObject var viewModel: HealthViewModel
     var onAddQuest: () -> Void
     var onScanMeal: () -> Void
+    
+    public init(
+        viewModel: HealthViewModel,
+        onAddQuest: @escaping () -> Void,
+        onScanMeal: @escaping () -> Void
+    ) {
+        self.viewModel = viewModel
+        self.onAddQuest = onAddQuest
+        self.onScanMeal = onScanMeal
+    }
     
     public var body: some View {
         ZStack {

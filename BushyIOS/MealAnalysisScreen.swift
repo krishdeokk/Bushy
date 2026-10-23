@@ -1,7 +1,7 @@
 import SwiftUI
 
 public struct MealAnalysisScreen: View {
-    @ObservedObject var gameViewModel: GameViewModel
+    @ObservedObject var healthViewModel: HealthViewModel
     @ObservedObject var aiViewModel: BushyAIViewModel
     @Environment(\.dismiss) private var dismiss
     
@@ -11,8 +11,8 @@ public struct MealAnalysisScreen: View {
     @State private var selectedPrepStyle: PrepStyle = .standard
     @State private var currentItem: EditableFoodItem? = nil
     
-    public init(gameViewModel: GameViewModel, aiViewModel: BushyAIViewModel) {
-        self.gameViewModel = gameViewModel
+    public init(healthViewModel: HealthViewModel, aiViewModel: BushyAIViewModel) {
+        self.healthViewModel = healthViewModel
         self.aiViewModel = aiViewModel
     }
     
@@ -256,7 +256,7 @@ public struct MealAnalysisScreen: View {
             // Log Button
             Button {
                 HapticManager.notify(type: .success)
-                gameViewModel.logMeal(
+                healthViewModel.logMeal(
                     name: item.foodName,
                     calories: nutrients.calories,
                     protein: Int(nutrients.proteinG),

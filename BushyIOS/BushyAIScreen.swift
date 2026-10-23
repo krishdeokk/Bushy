@@ -2,11 +2,21 @@ import SwiftUI
 
 public struct BushyAIScreen: View {
     @ObservedObject var aiViewModel: BushyAIViewModel
-    @ObservedObject var gameViewModel: GameViewModel
+    @ObservedObject var healthViewModel: HealthViewModel
     var onScanMeal: () -> Void
     
     @State private var inputText: String = ""
     @FocusState private var isInputFocused: Bool
+    
+    public init(
+        aiViewModel: BushyAIViewModel,
+        healthViewModel: HealthViewModel,
+        onScanMeal: @escaping () -> Void
+    ) {
+        self.aiViewModel = aiViewModel
+        self.healthViewModel = healthViewModel
+        self.onScanMeal = onScanMeal
+    }
     
     public var body: some View {
         ZStack {
@@ -56,10 +66,10 @@ public struct BushyAIScreen: View {
     
     private var headerBar: some View {
         HStack(spacing: 12) {
-            BloubAvatarView(
+            BloubAvatar(
                 expression: .attentive,
                 visualStyle: .monochrome,
-                themeMode: gameViewModel.uiState.themeMode
+                themeMode: healthViewModel.uiState.themeMode
             )
             .frame(width: 42, height: 42)
             
@@ -73,72 +83,91 @@ public struct BushyAIScreen: View {
                         .font(.system(size: 9, weight: .black))
                         .padding(.horizontal, 8)
                         .padding(.vertical, 3)
-                        .liquidGlassPill()
-                        .foregroundColor(.primary)
+                        .background(Color.primary.opacity(0.12))
+                        .clipShape(Capsule())
                 }
                 
-                Text("Your gamified fitness & Indian diet mentor")
+                Text("Health & Nutrition Companion")
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
             
             Spacer()
+            
+            Button {
+                HapticManager.impact(style: .medium)
+                onScanMeal()
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "camera.fill")
+                    Text("Scan")
+                        .fontWeight(.bold)
+                }
+                .font(.caption)
+                .foregroundColor(.primary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .liquidGlassPill()
+            }
         }
         .padding(.horizontal, 20)
-        .padding(.vertical, 12)
-        .background(.ultraThinMaterial)
-        .overlay(
-            Rectangle()
-                .frame(height: 1)
-                .foregroundColor(Color.white.opacity(0.18)),
-            alignment: .bottom
-        )
+        .padding(.top, 14)
+        .padding(.bottom, 12)
+        .background(.ultraThinMaterial.opacity(0.85))
     }
     
-    // MARK: - Message Row (Clean, no avatars)
+    // MARK: - Message Row (Clean, modern bubbles without repetitive avatar icons)
     
     private func messageRow(_ msg: BushyAIMessage) -> some View {
-        HStack(alignment: .bottom, spacing: 0) {
+        HStack(alignment: .bottom, spacing: 8) {
             if msg.isUser {
-                Spacer(minLength: 48)
+                Spacer(minLength: 40)
             }
             
-            Text(msg.text)
-                .font(.system(size: 15))
-                .foregroundColor(msg.isUser ? Color.bushyAppBackground : .primary)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-                .background(
-                    msg.isUser ?
-                    AnyShapeStyle(Color.primary) :
-                    AnyShapeStyle(.ultraThinMaterial)
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .stroke(Color.white.opacity(msg.isUser ? 0.35 : 0.25), lineWidth: 1)
-                )
-                .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
+            VStack(alignment: msg.isUser ? .trailing : .leading, spacing: 4) {
+                Text(msg.text)
+                    .font(.subheadline)
+                    .foregroundColor(msg.isUser ? Color.bushyAppBackground : .primary)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                    .background(
+                        msg.isUser
+                            ? AnyView(Color.primary)
+                            : AnyView(Color.secondary.opacity(0.12))
+                    )
+                    .clipShape(
+                        RoundedRectangle(cornerRadius: 18)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18)
+                            .stroke(
+                                msg.isUser ? Color.clear : Color.primary.opacity(0.15),
+                                lineWidth: 1
+                            )
+                    )
+            }
             
             if !msg.isUser {
-                Spacer(minLength: 48)
+                Spacer(minLength: 40)
             }
         }
-        .id(msg.id)
     }
     
+    // MARK: - Typing Indicator
+    
     private var typingIndicator: some View {
-        HStack(spacing: 0) {
-            HStack(spacing: 5) {
-                Circle().fill(Color.secondary).frame(width: 6, height: 6)
-                Circle().fill(Color.secondary).frame(width: 6, height: 6)
-                Circle().fill(Color.secondary).frame(width: 6, height: 6)
+        HStack(alignment: .bottom, spacing: 8) {
+            HStack(spacing: 4) {
+                Circle().fill(Color.primary.opacity(0.5)).frame(width: 6, height: 6)
+                Circle().fill(Color.primary.opacity(0.5)).frame(width: 6, height: 6)
+                Circle().fill(Color.primary.opacity(0.5)).frame(width: 6, height: 6)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .liquidGlassPill()
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(Color.secondary.opacity(0.12))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
             
-            Spacer(minLength: 48)
+            Spacer()
         }
     }
     
@@ -147,10 +176,10 @@ public struct BushyAIScreen: View {
     private var suggestedPrompts: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                promptPill("🍳 Suggest high protein breakfast")
-                promptPill("🎯 Give me a quest for 25 pushups")
-                promptPill("🍛 How many calories in Dal Tadka?")
-                promptPill("⚡ 15-minute home workout")
+                promptPill("Walk 5,000 steps today")
+                promptPill("How much protein in 2 eggs?")
+                promptPill("Do 25 pushups")
+                promptPill("Drink 8 glasses of water")
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 6)
@@ -159,8 +188,8 @@ public struct BushyAIScreen: View {
     
     private func promptPill(_ text: String) -> some View {
         Button {
-            aiViewModel.sendMessage(text, userStats: gameViewModel.uiState) { title, target, type in
-                gameViewModel.addNewTask(title: title, target: target, type: type)
+            aiViewModel.sendMessage(text, userStats: healthViewModel.uiState) { title, target, type in
+                healthViewModel.addNewTask(title: title, target: target, type: type)
             }
         } label: {
             Text(text)
@@ -178,39 +207,25 @@ public struct BushyAIScreen: View {
     private var chatInputBar: some View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
-                Button(action: onScanMeal) {
-                    Image(systemName: "camera.fill")
-                        .font(.system(size: 18))
-                        .foregroundColor(.primary)
-                        .frame(width: 44, height: 44)
-                        .liquidGlassCircle()
-                }
-                
-                TextField("Ask anything or create a quest...", text: $inputText)
+                TextField("Ask Bushy anything about fitness...", text: $inputText)
                     .font(.subheadline)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 12)
-                    .liquidGlassPill()
+                    .liquidGlassCard(cornerRadius: 22)
                     .focused($isInputFocused)
                     .onSubmit {
                         sendCurrentText()
                     }
                 
-                Button(action: sendCurrentText) {
-                    Image(systemName: "arrow.up")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(Color.bushyAppBackground)
-                        .frame(width: 44, height: 44)
-                        .background(
-                            inputText.isEmpty ?
-                            AnyShapeStyle(Color.secondary.opacity(0.3)) :
-                            AnyShapeStyle(Color.primary)
-                        )
-                        .clipShape(Circle())
-                        .overlay(Circle().stroke(Color.white.opacity(0.3), lineWidth: 1))
-                        .shadow(color: inputText.isEmpty ? Color.clear : Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
+                Button {
+                    HapticManager.impact(style: .medium)
+                    sendCurrentText()
+                } label: {
+                    Image(systemName: "arrow.up.circle.fill")
+                        .font(.system(size: 34))
+                        .foregroundColor(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .secondary.opacity(0.4) : .primary)
                 }
-                .disabled(inputText.isEmpty)
+                .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
             .padding(.horizontal, 16)
             .padding(.top, 10)
@@ -223,8 +238,8 @@ public struct BushyAIScreen: View {
         let trimmed = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         inputText = ""
-        aiViewModel.sendMessage(trimmed, userStats: gameViewModel.uiState) { title, target, type in
-            gameViewModel.addNewTask(title: title, target: target, type: type)
+        aiViewModel.sendMessage(trimmed, userStats: healthViewModel.uiState) { title, target, type in
+            healthViewModel.addNewTask(title: title, target: target, type: type)
         }
     }
 }

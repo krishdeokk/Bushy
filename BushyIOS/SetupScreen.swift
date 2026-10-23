@@ -1,7 +1,7 @@
 import SwiftUI
 
 public struct SetupScreen: View {
-    @ObservedObject var viewModel: GameViewModel
+    @ObservedObject var viewModel: HealthViewModel
     
     @State private var currentStep = 0
     @State private var name: String = ""
@@ -11,7 +11,7 @@ public struct SetupScreen: View {
     @State private var selectedThemeMode: ThemeMode = .system
     @State private var selectedCountry: String = "India"
     
-    public init(viewModel: GameViewModel) {
+    public init(viewModel: HealthViewModel) {
         self.viewModel = viewModel
     }
     
@@ -143,7 +143,7 @@ public struct SetupScreen: View {
                         selectedGender = type
                     } label: {
                         VStack(spacing: 12) {
-                            BloubAvatarView(
+                            BloubAvatar(
                                 expression: .happy,
                                 visualStyle: .monochrome,
                                 themeMode: selectedThemeMode

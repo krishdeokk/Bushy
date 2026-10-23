@@ -1,8 +1,12 @@
 import SwiftUI
 
 public struct SwitchHeroSheet: View {
-    @ObservedObject var viewModel: GameViewModel
+    @ObservedObject var viewModel: HealthViewModel
     @Environment(\.dismiss) private var dismiss
+    
+    public init(viewModel: HealthViewModel) {
+        self.viewModel = viewModel
+    }
     
     public var body: some View {
         NavigationStack {
@@ -19,7 +23,7 @@ public struct SwitchHeroSheet: View {
                             dismiss()
                         } label: {
                             VStack(spacing: 12) {
-                                BloubAvatarView(
+                                BloubAvatar(
                                     expression: .happy,
                                     visualStyle: viewModel.uiState.visualStyle,
                                     themeMode: viewModel.uiState.themeMode

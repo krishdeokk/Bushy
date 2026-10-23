@@ -1,7 +1,7 @@
 import SwiftUI
 
-public struct GameScreen: View {
-    @ObservedObject var viewModel: GameViewModel
+public struct HealthScreen: View {
+    @ObservedObject var viewModel: HealthViewModel
     @StateObject private var aiViewModel = BushyAIViewModel()
     
     @State private var selectedTab: Int = 0
@@ -10,7 +10,7 @@ public struct GameScreen: View {
     @State private var showShareSheet: Bool = false
     @State private var showSwitchHeroSheet: Bool = false
     
-    public init(viewModel: GameViewModel) {
+    public init(viewModel: HealthViewModel) {
         self.viewModel = viewModel
     }
     
@@ -45,7 +45,7 @@ public struct GameScreen: View {
                 
                 BushyAIScreen(
                     aiViewModel: aiViewModel,
-                    gameViewModel: viewModel,
+                    healthViewModel: viewModel,
                     onScanMeal: {
                         showScanMealSheet = true
                     }
@@ -76,7 +76,7 @@ public struct GameScreen: View {
             AddTaskSheet(viewModel: viewModel)
         }
         .sheet(isPresented: $showScanMealSheet) {
-            MealAnalysisScreen(gameViewModel: viewModel, aiViewModel: aiViewModel)
+            MealAnalysisScreen(healthViewModel: viewModel, aiViewModel: aiViewModel)
         }
         .sheet(isPresented: $showShareSheet) {
             StoryShare(viewModel: viewModel)
