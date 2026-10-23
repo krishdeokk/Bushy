@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 
-class GameViewModel(application: Application) : AndroidViewModel(application) {
+class HealthViewModel(application: Application) : AndroidViewModel(application) {
 
     private val healthManager = HealthManager(application)
     private val prefs = application.getSharedPreferences("bushy_prefs", Context.MODE_PRIVATE)
@@ -105,6 +105,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             isSetupComplete = prefs.getBoolean("is_setup_complete", false),
             themeMode = ThemeMode.valueOf(prefs.getString("theme_mode", ThemeMode.SYSTEM.name) ?: ThemeMode.SYSTEM.name),
             visualStyle = VisualStyle.valueOf(prefs.getString("visual_style", VisualStyle.MATERIAL3.name) ?: VisualStyle.MATERIAL3.name),
+            dynamicColor = prefs.getBoolean("dynamic_color", true),
             steps = prefs.getLong("steps", 0L),
             pushups = prefs.getInt("pushups", 0),
             xp = prefs.getLong("xp", 0L),
@@ -132,6 +133,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             putBoolean("is_setup_complete", state.isSetupComplete)
             putString("theme_mode", state.themeMode.name)
             putString("visual_style", state.visualStyle.name)
+            putBoolean("dynamic_color", state.dynamicColor)
             putLong("steps", state.steps)
             putInt("pushups", state.pushups)
             putLong("xp", state.xp)
@@ -351,6 +353,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun setVisualStyle(style: VisualStyle) {
         _uiState.update { 
             it.copy(visualStyle = style).also { state -> saveStats(state) }
+        }
+    }
+
+    fun setDynamicColor(enabled: Boolean) {
+        _uiState.update { 
+            it.copy(dynamicColor = enabled).also { state -> saveStats(state) }
         }
     }
 

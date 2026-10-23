@@ -35,7 +35,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.bushy.health.GameViewModel
+import com.bushy.health.HealthViewModel
 import com.bushy.health.ThemeMode
 import com.bushy.health.VisualStyle
 import com.bushy.health.AvatarType
@@ -44,7 +44,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun SetupScreen(
-    viewModel: GameViewModel,
+    viewModel: HealthViewModel,
     onRequestPermissions: () -> Unit
 ) {
     val pagerState = rememberPagerState { 7 }

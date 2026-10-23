@@ -15,11 +15,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.core.view.WindowCompat
 import androidx.health.connect.client.PermissionController
-import com.bushy.health.ui.GameScreen
+import com.bushy.health.ui.HealthScreen
 import com.bushy.health.ui.theme.BushyTheme
 
 class MainActivity : ComponentActivity() {
-    private val viewModel: GameViewModel by viewModels()
+    private val viewModel: HealthViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,7 +47,8 @@ class MainActivity : ComponentActivity() {
             BushyTheme(
                 avatarType = uiState.avatarType, 
                 themeMode = uiState.themeMode,
-                visualStyle = uiState.visualStyle
+                visualStyle = uiState.visualStyle,
+                dynamicColor = uiState.dynamicColor
             ) {
                 LaunchedEffect(Unit) {
                     if (healthManager.hasPermissions()) {
@@ -59,7 +60,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background,
                 ) {
-                    GameScreen(
+                    HealthScreen(
                         viewModel = viewModel,
                         onRequestPermissions = { requestPermissions.launch(healthManager.permissions) }
                     )

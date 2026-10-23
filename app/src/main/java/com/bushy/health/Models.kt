@@ -26,6 +26,7 @@ data class UserStats(
     val isSetupComplete: Boolean = false,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val visualStyle: VisualStyle = VisualStyle.MATERIAL3,
+    val dynamicColor: Boolean = true,
     val steps: Long = 0,
     val pushups: Int = 0,
     val xp: Long = 0,

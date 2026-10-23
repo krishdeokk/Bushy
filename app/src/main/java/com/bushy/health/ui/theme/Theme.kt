@@ -177,7 +177,7 @@ fun BushyTheme(
     avatarType: AvatarType = AvatarType.MALE,
     themeMode: ThemeMode = ThemeMode.SYSTEM,
     visualStyle: VisualStyle = VisualStyle.MATERIAL3,
-    dynamicColor: Boolean = false,
+    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val darkTheme = when (themeMode) {

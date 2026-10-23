@@ -11,12 +11,15 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -85,8 +88,8 @@ import kotlin.math.abs
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GameScreen(
-    viewModel: GameViewModel = viewModel(),
+fun HealthScreen(
+    viewModel: HealthViewModel = viewModel(),
     onRequestPermissions: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -94,13 +97,13 @@ fun GameScreen(
     if (!uiState.isSetupComplete) {
         SetupScreen(viewModel = viewModel, onRequestPermissions = onRequestPermissions)
     } else {
-        GameMainContent(uiState, viewModel)
+        HealthMainContent(uiState, viewModel)
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
+fun HealthMainContent(uiState: UserStats, viewModel: HealthViewModel) {
     var showAvatarSelection by remember { mutableStateOf(false) }
     var showShareMenu by remember { mutableStateOf(false) }
     var showAddTaskDialog by remember { mutableStateOf(false) }
@@ -437,12 +440,11 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
             }
 
             // DYNAMIC NAVIGATION PILL
-            val currentFraction by remember {
+            val isBushyAITab by remember {
                 derivedStateOf {
-                    pagerState.currentPage + pagerState.currentPageOffsetFraction
+                    pagerState.currentPage == 2 && !pagerState.isScrollInProgress
                 }
             }
-            val isBushyAITab = currentFraction > 1.4f
             val isKeyboardVisible = WindowInsets.isImeVisible
             var isTappedPulse by remember { mutableStateOf(false) }
 
@@ -477,29 +479,29 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
                 label = "PillScale"
             )
 
-            var pillDragAmount by remember { mutableFloatStateOf(0f) }
             var isFabMenuExpanded by remember { mutableStateOf(false) }
 
             LaunchedEffect(pagerState.currentPage) {
                 isFabMenuExpanded = false
             }
 
-            // Universal FAB Menu Overlay to capture outside clicks
+            // Universal FAB Menu Overlay Scrim to capture outside clicks
             androidx.compose.animation.AnimatedVisibility(
                 visible = isFabMenuExpanded,
-                enter = fadeIn(),
-                exit = fadeOut()
+                enter = fadeIn(animationSpec = tween(200)),
+                exit = fadeOut(animationSpec = tween(200))
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.3f))
+                        .background(Color.Black.copy(alpha = 0.4f))
                         .pointerInput(Unit) {
                             detectTapGestures { isFabMenuExpanded = false }
                         }
                 )
             }
 
+            // Bottom Navigation & Action FAB Menu Container
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -512,188 +514,159 @@ fun GameMainContent(uiState: UserStats, viewModel: GameViewModel) {
                     enter = fadeIn(spring(stiffness = Spring.StiffnessMediumLow)) + scaleIn(spring(dampingRatio = 0.8f, stiffness = Spring.StiffnessMediumLow)),
                     exit = fadeOut(spring(stiffness = Spring.StiffnessMediumLow)) + scaleOut(spring(stiffness = Spring.StiffnessMediumLow))
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .pointerInput(Unit) {
-                                detectHorizontalDragGestures(
-                                    onDragStart = { pillDragAmount = 0f },
-                                    onDragEnd = {
-                                        val targetPage = when {
-                                            pillDragAmount < -30f -> (pagerState.currentPage + 1).coerceAtMost(2)
-                                            pillDragAmount > 30f -> (pagerState.currentPage - 1).coerceAtLeast(0)
-                                            else -> pagerState.currentPage
-                                        }
-                                        if (targetPage != pagerState.currentPage) {
-                                            performSubtleClick()
-                                            scope.launch {
-                                                isTappedPulse = true
-                                                pagerState.animateScrollToPage(
-                                                    targetPage,
-                                                    animationSpec = spring(
-                                                        dampingRatio = 0.8f,
-                                                        stiffness = Spring.StiffnessMediumLow
-                                                    )
-                                                )
-                                                delay(250)
-                                                isTappedPulse = false
-                                            }
-                                        }
-                                    },
-                                    onHorizontalDrag = { change, dragAmount ->
-                                        change.consume()
-                                        pillDragAmount += dragAmount
-                                    }
-                                )
-                            }
-                            .graphicsLayer {
-                                scaleX = pillScale
-                                scaleY = pillScale
-                                transformOrigin = TransformOrigin.Center
-                            }
-                            .wrapContentWidth()
-                            .height(86.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        horizontalAlignment = Alignment.End,
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.wrapContentSize()
                     ) {
-                        // Main Navigation Pill
-                        Surface(
-                            color = MaterialTheme.colorScheme.surface,
-                            shape = CircleShape,
-                            border = BorderStroke(
-                                width = 2.dp,
-                                color = if (uiState.visualStyle == VisualStyle.MONOCHROME) 
-                                    MaterialTheme.colorScheme.onBackground
-                                else 
-                                    MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)
-                            ),
-                            modifier = Modifier.fillMaxHeight(),
-                            shadowElevation = 0.dp,
-                            tonalElevation = 0.dp
+                        // Quick Action Menu (Expanded State)
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = isFabMenuExpanded,
+                            enter = fadeIn(spring(stiffness = Spring.StiffnessMediumLow)) +
+                                    scaleIn(initialScale = 0.8f, transformOrigin = TransformOrigin(1f, 1f), animationSpec = spring(dampingRatio = 0.7f, stiffness = Spring.StiffnessMediumLow)) +
+                                    slideInVertically(initialOffsetY = { it / 2 }),
+                            exit = fadeOut(spring(stiffness = Spring.StiffnessMediumLow)) +
+                                   scaleOut(targetScale = 0.8f, transformOrigin = TransformOrigin(1f, 1f), animationSpec = spring(stiffness = Spring.StiffnessMediumLow)) +
+                                   slideOutVertically(targetOffsetY = { it / 2 })
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .padding(8.dp)
-                                    .wrapContentWidth()
-                                    .fillMaxHeight(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(10.dp),
+                                horizontalAlignment = Alignment.End,
+                                modifier = Modifier.padding(bottom = 4.dp, end = 2.dp)
                             ) {
-                                PillTabItem(
-                                    selected = pagerState.currentPage == 0,
-                                    onClick = { onPillClick(0) },
-                                    label = "Home",
-                                    icon = Icons.Rounded.Home,
-                                    selectedColor = MaterialTheme.colorScheme.primary
+                                // 1. Bushy Wushy AI Option
+                                QuickActionButton(
+                                    onClick = {
+                                        isFabMenuExpanded = false
+                                        onPillClick(2)
+                                    },
+                                    icon = Icons.Rounded.AutoAwesome,
+                                    label = "Bushy Wushy AI",
+                                    visualStyle = uiState.visualStyle
                                 )
-                                PillTabItem(
-                                    selected = pagerState.currentPage == 1,
-                                    onClick = { onPillClick(1) },
-                                    label = "Tasks",
+
+                                // 2. Add Task Option
+                                QuickActionButton(
+                                    onClick = {
+                                        isFabMenuExpanded = false
+                                        showAddTaskDialog = true
+                                    },
                                     icon = Icons.AutoMirrored.Rounded.Assignment,
-                                    selectedColor = MaterialTheme.colorScheme.primary
+                                    label = "Add Task",
+                                    visualStyle = uiState.visualStyle
                                 )
                             }
                         }
 
-                        // Universal FAB Menu
-                        Box(
+                        // Bottom Navigation Row
+                        Row(
                             modifier = Modifier
-                                .fillMaxHeight()
-                                .aspectRatio(1f),
-                            contentAlignment = Alignment.BottomCenter
+                                .graphicsLayer {
+                                    scaleX = pillScale
+                                    scaleY = pillScale
+                                    transformOrigin = TransformOrigin.Center
+                                }
+                                .wrapContentWidth()
+                                .height(76.dp),
+                            horizontalArrangement = Arrangement.spacedBy(14.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // The popup menu options
-                            Box(
-                                modifier = Modifier
-                                    .align(Alignment.TopEnd)
-                                    .requiredSize(0.dp)
-                                    .offset(y = (-8).dp, x = (-48).dp), // Adjust X offset to pull menu fully onscreen
-                                contentAlignment = Alignment.BottomEnd
+                            // Main Navigation Pill
+                            val pillBorderColor = if (uiState.visualStyle == VisualStyle.MONOCHROME)
+                                MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+                            else
+                                MaterialTheme.colorScheme.outline.copy(alpha = 0.35f)
+
+                            Surface(
+                                color = MaterialTheme.colorScheme.surface,
+                                shape = CircleShape,
+                                border = BorderStroke(
+                                    width = 1.5.dp,
+                                    color = pillBorderColor
+                                ),
+                                modifier = Modifier.fillMaxHeight(),
+                                shadowElevation = 4.dp,
+                                tonalElevation = 1.dp
                             ) {
-                                androidx.compose.animation.AnimatedVisibility(
-                                    visible = isFabMenuExpanded,
-                                    enter = fadeIn(spring(stiffness = Spring.StiffnessMediumLow)) + scaleIn(initialScale = 0.8f, animationSpec = spring(dampingRatio = 0.6f, stiffness = 800f)),
-                                    exit = fadeOut(spring(stiffness = Spring.StiffnessMediumLow)) + scaleOut(targetScale = 0.8f, animationSpec = spring(stiffness = Spring.StiffnessMediumLow))
+                                Row(
+                                    modifier = Modifier
+                                        .padding(5.dp)
+                                        .wrapContentWidth()
+                                        .fillMaxHeight(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
-                                    Column(
-                                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                                        horizontalAlignment = Alignment.End,
-                                    ) {
-                                        // Bushy AI Option
-                                        ExtendedFloatingActionButton(
-                                            onClick = { 
-                                                isFabMenuExpanded = false
-                                                onPillClick(2)
-                                            },
-                                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                                            shape = CircleShape,
-                                            icon = { Icon(Icons.Rounded.Cloud, contentDescription = "Bushy AI") },
-                                            text = { Text("Bushy AI", fontWeight = FontWeight.Bold) }
-                                        )
-                                        
-                                        // Add Mission Option
-                                        ExtendedFloatingActionButton(
-                                            onClick = {
-                                                isFabMenuExpanded = false
-                                                showAddTaskDialog = true
-                                            },
-                                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                                            shape = CircleShape,
-                                            icon = { Icon(Icons.AutoMirrored.Rounded.Assignment, contentDescription = "Add Mission") },
-                                            text = { Text("Add Mission", fontWeight = FontWeight.Bold) }
-                                        )
-                                    }
+                                    PillTabItem(
+                                        selected = pagerState.currentPage == 0,
+                                        onClick = { onPillClick(0) },
+                                        label = "Home",
+                                        icon = Icons.Rounded.Home,
+                                        visualStyle = uiState.visualStyle
+                                    )
+                                    PillTabItem(
+                                        selected = pagerState.currentPage == 1,
+                                        onClick = { onPillClick(1) },
+                                        label = "Tasks",
+                                        icon = Icons.AutoMirrored.Rounded.Assignment,
+                                        visualStyle = uiState.visualStyle
+                                    )
                                 }
                             }
 
-                            // Main FAB Squircle
+                            // Main FAB Squircle / Toggle Button
                             val fabRotation by animateFloatAsState(
                                 targetValue = if (isFabMenuExpanded) 45f else 0f,
-                                animationSpec = spring(dampingRatio = 0.6f, stiffness = 800f)
+                                animationSpec = spring(dampingRatio = 0.6f, stiffness = 800f),
+                                label = "FabRotation"
                             )
-                            
+
                             val aiSelected = pagerState.currentPage == 2 && !isFabMenuExpanded
                             val fabBgColor by animateColorAsState(
-                                targetValue = if (isFabMenuExpanded || aiSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
-                                animationSpec = spring(dampingRatio = 0.7f, stiffness = 800f)
+                                targetValue = if (isFabMenuExpanded || aiSelected)
+                                    MaterialTheme.colorScheme.primaryContainer
+                                else
+                                    MaterialTheme.colorScheme.surface,
+                                animationSpec = spring(dampingRatio = 0.7f, stiffness = 800f),
+                                label = "FabBgColor"
                             )
                             val fabContentColor by animateColorAsState(
-                                targetValue = if (isFabMenuExpanded || aiSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
-                                animationSpec = spring(dampingRatio = 0.7f, stiffness = 800f)
+                                targetValue = if (isFabMenuExpanded || aiSelected)
+                                    MaterialTheme.colorScheme.onPrimaryContainer
+                                else if (uiState.visualStyle == VisualStyle.MONOCHROME)
+                                    MaterialTheme.colorScheme.onSurface
+                                else
+                                    MaterialTheme.colorScheme.primary,
+                                animationSpec = spring(dampingRatio = 0.7f, stiffness = 800f),
+                                label = "FabContentColor"
                             )
 
                             Surface(
-                                onClick = { 
-                                    isFabMenuExpanded = !isFabMenuExpanded 
+                                onClick = {
+                                    isFabMenuExpanded = !isFabMenuExpanded
                                     performSubtleClick()
                                 },
                                 color = fabBgColor,
                                 contentColor = fabContentColor,
-                                shape = RoundedCornerShape(24.dp), // Squircle shape like the image
+                                shape = RoundedCornerShape(22.dp),
                                 border = BorderStroke(
-                                    width = 2.dp,
-                                    color = if (uiState.visualStyle == VisualStyle.MONOCHROME) 
-                                        MaterialTheme.colorScheme.onBackground
-                                    else 
-                                        MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)
+                                    width = 1.5.dp,
+                                    color = pillBorderColor
                                 ),
                                 modifier = Modifier
                                     .fillMaxHeight()
                                     .aspectRatio(1f),
-                                shadowElevation = 0.dp,
-                                tonalElevation = 0.dp
+                                shadowElevation = 4.dp,
+                                tonalElevation = 1.dp
                             ) {
                                 Box(
                                     modifier = Modifier.fillMaxSize(),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
-                                        Icons.Rounded.Add, 
-                                        contentDescription = "Universal Action",
+                                        Icons.Rounded.Add,
+                                        contentDescription = if (isFabMenuExpanded) "Close Menu" else "Open Menu",
                                         modifier = Modifier
-                                            .size(32.dp)
+                                            .size(28.dp)
                                             .graphicsLayer { rotationZ = fabRotation }
                                     )
                                 }
@@ -1044,7 +1017,7 @@ fun LevelHeader(stats: UserStats) {
 @Composable
 fun HomeScreen(
     uiState: UserStats,
-    viewModel: GameViewModel,
+    viewModel: HealthViewModel,
     externalTouchPositionInWindow: Offset? = null
 ) {
     LazyColumn(
@@ -1332,16 +1305,34 @@ fun PillTabItem(
     label: String,
     icon: ImageVector,
     modifier: Modifier = Modifier,
-    selectedColor: Color
+    visualStyle: VisualStyle = VisualStyle.MATERIAL3
 ) {
+    val selectedBgColor = if (visualStyle == VisualStyle.MONOCHROME) {
+        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.18f)
+    } else {
+        MaterialTheme.colorScheme.primary.copy(alpha = 0.22f)
+    }
+
+    val selectedContentColor = if (visualStyle == VisualStyle.MONOCHROME) {
+        MaterialTheme.colorScheme.onSurface
+    } else {
+        MaterialTheme.colorScheme.primary
+    }
+
+    val unselectedContentColor = if (visualStyle == VisualStyle.MONOCHROME) {
+        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f)
+    }
+
     val animatedBgColor by animateColorAsState(
-        targetValue = if (selected) selectedColor.copy(alpha = 0.2f) else Color.Transparent,
+        targetValue = if (selected) selectedBgColor else Color.Transparent,
         animationSpec = spring(dampingRatio = 0.7f, stiffness = 800f),
         label = "PillTabBgColor"
     )
 
     val animatedContentColor by animateColorAsState(
-        targetValue = if (selected) selectedColor else MaterialTheme.colorScheme.onSurfaceVariant,
+        targetValue = if (selected) selectedContentColor else unselectedContentColor,
         animationSpec = spring(dampingRatio = 0.7f, stiffness = 800f),
         label = "PillTabContentColor"
     )
@@ -1352,8 +1343,8 @@ fun PillTabItem(
         contentColor = animatedContentColor,
         shape = CircleShape,
         modifier = modifier
-            .padding(4.dp)
-            .height(64.dp)
+            .padding(3.dp)
+            .fillMaxHeight()
             .animateContentSize(animationSpec = spring(dampingRatio = 0.7f, stiffness = 800f))
     ) {
         Row(
@@ -1361,15 +1352,62 @@ fun PillTabItem(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            Icon(icon, contentDescription = label, modifier = Modifier.size(28.dp))
+            Icon(icon, contentDescription = label, modifier = Modifier.size(26.dp))
             androidx.compose.animation.AnimatedVisibility(visible = selected) {
                 Text(
                     text = label,
-                    modifier = Modifier.padding(start = 12.dp),
+                    modifier = Modifier.padding(start = 10.dp),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun QuickActionButton(
+    onClick: () -> Unit,
+    icon: ImageVector,
+    label: String,
+    modifier: Modifier = Modifier,
+    visualStyle: VisualStyle = VisualStyle.MATERIAL3
+) {
+    val borderColor = if (visualStyle == VisualStyle.MONOCHROME)
+        MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+    else
+        MaterialTheme.colorScheme.outline.copy(alpha = 0.35f)
+
+    Surface(
+        onClick = onClick,
+        color = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        shape = CircleShape,
+        border = BorderStroke(
+            width = 1.5.dp,
+            color = borderColor
+        ),
+        shadowElevation = 6.dp,
+        tonalElevation = 1.dp,
+        modifier = modifier
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 22.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = label,
+                modifier = Modifier.size(22.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
         }
     }
 }
