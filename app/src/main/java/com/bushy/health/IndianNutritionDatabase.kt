@@ -137,7 +137,7 @@ object IndianNutritionDatabase {
         IndianNutritionEntry(
             id = "poha",
             name = "Kanda Batata Poha",
-            aliases = listOf("poha", "flattened rice", "kanda poha", "pohe", "पोहा", "पोहे", "চিঁড়ে", "அவல்", "అటుకులు"),
+            aliases = listOf("poha", "flattened rice", "kanda poha", "pohe", "पोहा", "पोहे", "চিঁড়ে", "அவல்", "அటుకులు"),
             caloriesPer100g = 160, proteinPer100g = 3.2f, carbsPer100g = 28.0f, fatPer100g = 4.2f,
             defaultUnit = PortionUnit.KATORI, defaultUnitWeightGrams = 120f,
             prepNotes = "Flattened rice tempered with mustard seeds, curry leaves, onions, peanuts, and turmeric.", regionOrCategory = "Maharashtra & MP"
@@ -334,7 +334,39 @@ object IndianNutritionDatabase {
             defaultUnit = PortionUnit.PIECE, defaultUnitWeightGrams = 20f,
             prepNotes = "Hollow crispy fried puri stuffed with potato, boiled sprouts, and spicy mint water.", regionOrCategory = "Pan-India Street Food"
         ),
-        // Zero-Calorie & High Protein Fitness Supplements
+        // PACKED FOODS, SNACKS & FITNESS SUPPLEMENTS
+        IndianNutritionEntry(
+            id = "packed_protein_bar",
+            name = "Packed Protein Bar / Snack Bar",
+            aliases = listOf("protein bar", "packed protein bar", "nutrition bar", "energy bar", "snack bar", "bar", "প্রোটিন বার", "प्रोटीन बार"),
+            caloriesPer100g = 350, proteinPer100g = 33.3f, carbsPer100g = 36.6f, fatPer100g = 11.6f,
+            defaultUnit = PortionUnit.PIECE, defaultUnitWeightGrams = 60f,
+            prepNotes = "1 packed protein bar (~60g) delivers ~210 kcal and 20g whey/soy protein.", regionOrCategory = "Packed Snack / Fitness"
+        ),
+        IndianNutritionEntry(
+            id = "packed_biscuits",
+            name = "Packed Biscuits / Cookies",
+            aliases = listOf("biscuits", "cookies", "biscuit pack", "parle g", "good day", "bourbon", "biscuit", "बिस्कुट", "বিস্কুট"),
+            caloriesPer100g = 440, proteinPer100g = 7.0f, carbsPer100g = 68.0f, fatPer100g = 18.0f,
+            defaultUnit = PortionUnit.PIECE, defaultUnitWeightGrams = 50f,
+            prepNotes = "1 small packet of baked wheat/maida biscuits (~50g) contains ~220 kcal.", regionOrCategory = "Packed Snack"
+        ),
+        IndianNutritionEntry(
+            id = "packed_dark_chocolate",
+            name = "Packed Dark Chocolate",
+            aliases = listOf("dark chocolate", "chocolate", "cadbury", "chocolate bar", "चॉकलेट", "চকলেট"),
+            caloriesPer100g = 550, proteinPer100g = 7.3f, carbsPer100g = 56.0f, fatPer100g = 35.0f,
+            defaultUnit = PortionUnit.PIECE, defaultUnitWeightGrams = 30f,
+            prepNotes = "1 serving of cocoa dark chocolate (~30g) provides ~165 kcal.", regionOrCategory = "Packed Confectionery"
+        ),
+        IndianNutritionEntry(
+            id = "packed_chips",
+            name = "Packed Potato Chips / Namkeen",
+            aliases = listOf("chips", "potato chips", "lays", "kurkure", "namkeen", "packaged snack", "चिप्स", "চিপস"),
+            caloriesPer100g = 530, proteinPer100g = 6.6f, carbsPer100g = 50.0f, fatPer100g = 35.0f,
+            defaultUnit = PortionUnit.PIECE, defaultUnitWeightGrams = 30f,
+            prepNotes = "1 small pack of fried potato chips or namkeen (~30g) contains ~160 kcal.", regionOrCategory = "Packed Snack"
+        ),
         IndianNutritionEntry(
             id = "creatine_monohydrate",
             name = "Creatine Monohydrate (Supplement)",

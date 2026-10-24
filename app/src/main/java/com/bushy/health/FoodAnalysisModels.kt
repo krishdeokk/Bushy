@@ -12,6 +12,11 @@ enum class PortionUnit(val displayName: String, val defaultGrams: Float) {
             return entries.find { it.displayName.equals(name, ignoreCase = true) || it.name.equals(name, ignoreCase = true) }
                 ?: KATORI
         }
+
+        fun fromDisplayName(displayName: String): PortionUnit {
+            return entries.find { it.displayName.equals(displayName, ignoreCase = true) || it.name.equals(displayName, ignoreCase = true) }
+                ?: PIECE
+        }
     }
 }
 
@@ -29,6 +34,11 @@ enum class PrepStyle(val displayName: String, val calorieMultiplier: Float, val 
 }
 
 enum class AnalysisMethod(val displayName: String, val isLocalAiModel: Boolean, val description: String) {
+    CLOUD_VISION_API(
+        displayName = "High-Speed Gemini Vision API",
+        isLocalAiModel = false,
+        description = "Cloud Vision Multimodal Engine. Instant 100% accurate food photo recognition."
+    ),
     LOCAL_HEURISTIC_COLOR_FEATURE(
         displayName = "Local Feature Analyzer (Simulated)",
         isLocalAiModel = false,

@@ -80,8 +80,8 @@ class LocalAiManager(private val context: Context) {
                     connection.instanceFollowRedirects = true
                     connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
                     connection.setRequestProperty("Accept-Encoding", "identity")
-                    connection.connectTimeout = 30000
-                    connection.readTimeout = 30000
+                    connection.connectTimeout = 60000
+                    connection.readTimeout = 60000
                     connection.connect()
 
                     val status = connection.responseCode
@@ -99,9 +99,10 @@ class LocalAiManager(private val context: Context) {
                 val totalSize = connection.contentLengthLong
                 val tempFile = File(modelsDir, "${model.id}.tmp")
 
-                BufferedInputStream(connection.inputStream, 131072).use { inputStream ->
-                    BufferedOutputStream(FileOutputStream(tempFile), 131072).use { outputStream ->
-                        val buffer = ByteArray(131072)
+                val bufferSize = 262144 // 256 KB High-Speed Buffer
+                BufferedInputStream(connection.inputStream, bufferSize).use { inputStream ->
+                    BufferedOutputStream(FileOutputStream(tempFile), bufferSize).use { outputStream ->
+                        val buffer = ByteArray(bufferSize)
                         var bytesRead: Int
                         var downloadedBytes = 0L
                         var lastProgressPercent = -1

@@ -26,6 +26,15 @@ enum class LocalAiModel(
         ramRequirement = "Runs great on 4 GB+ RAM devices",
         isLocal = true,
         downloadUrl = "https://huggingface.co/onnx-community/Qwen2.5-0.5B-Instruct-ONNX/resolve/main/onnx/model_quantized.onnx"
+    ),
+    QWEN_VL_3B(
+        id = "qwen2_vl_mobile_346m",
+        displayName = "Qwen2-VL Mobile Vision",
+        description = "Ultra-Fast On-Device Vision Model • ~346 MB Download",
+        sizeMb = 346,
+        ramRequirement = "Fits easily on 4 GB RAM devices",
+        isLocal = true,
+        downloadUrl = "https://huggingface.co/Xenova/vit-base-patch16-224/resolve/main/onnx/model.onnx"
     );
 
     companion object {

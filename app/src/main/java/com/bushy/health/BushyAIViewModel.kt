@@ -17,7 +17,7 @@ class BushyAIViewModel(application: Application) : AndroidViewModel(application)
 
     private val prefs = application.getSharedPreferences("bushy_ai_prefs", Context.MODE_PRIVATE)
     private val localAiManager = LocalAiManager(application)
-    private val visionFoodAnalyzer: VisionFoodAnalyzer = LocalVisionFoodAnalyzer()
+    private val visionFoodAnalyzer: VisionFoodAnalyzer = QwenVisionFoodAnalyzer(application, localAiManager)
 
     private val _selectedModel = MutableStateFlow(
         LocalAiModel.fromId(prefs.getString("selected_ai_model", LocalAiModel.SMOLLM_360M.id) ?: LocalAiModel.SMOLLM_360M.id)
