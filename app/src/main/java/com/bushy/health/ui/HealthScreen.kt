@@ -1020,45 +1020,112 @@ fun HomeScreen(
     viewModel: HealthViewModel,
     externalTouchPositionInWindow: Offset? = null
 ) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize().statusBarsPadding(),
-        contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 200.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(28.dp)
-    ) {
-        item {
-            AvatarSection(
-                type = uiState.avatarType,
-                expression = uiState.expression,
-                visualStyle = uiState.visualStyle,
-                themeMode = uiState.themeMode,
-                userName = uiState.userName,
-                externalTouchPositionInWindow = externalTouchPositionInWindow,
-                onAvatarTap = { viewModel.onAvatarTap() },
-                onAvatarDoubleTap = { viewModel.onAvatarDoubleTap() }
-            )
-        }
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val isWideScreen = maxWidth >= 600.dp
 
-        item {
-            LevelHeader(uiState)
-        }
+        if (isWideScreen) {
+            // Foldable Unfolded / Wide Screen Layout (Side-by-Side 2 Columns)
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding()
+                    .padding(start = 24.dp, end = 24.dp, top = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(28.dp)
+            ) {
+                // Left Column: Avatar & Level Header
+                LazyColumn(
+                    modifier = Modifier.weight(0.45f),
+                    contentPadding = PaddingValues(bottom = 140.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                ) {
+                    item {
+                        AvatarSection(
+                            type = uiState.avatarType,
+                            expression = uiState.expression,
+                            visualStyle = uiState.visualStyle,
+                            themeMode = uiState.themeMode,
+                            userName = uiState.userName,
+                            externalTouchPositionInWindow = externalTouchPositionInWindow,
+                            onAvatarTap = { viewModel.onAvatarTap() },
+                            onAvatarDoubleTap = { viewModel.onAvatarDoubleTap() }
+                        )
+                    }
+                    item {
+                        LevelHeader(uiState)
+                    }
+                }
 
-        if (uiState.syncMessage != null) {
-            item {
-                SyncStatusCard(uiState.syncMessage)
+                // Right Column: Stats Grid, Sync Status, Meals
+                LazyColumn(
+                    modifier = Modifier.weight(0.55f),
+                    contentPadding = PaddingValues(bottom = 140.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                ) {
+                    if (uiState.syncMessage != null) {
+                        item {
+                            SyncStatusCard(uiState.syncMessage)
+                        }
+                    }
+
+                    item {
+                        StatsGrid(uiState)
+                    }
+
+                    if (uiState.loggedMeals.isNotEmpty()) {
+                        item {
+                            MealsSection(
+                                meals = uiState.loggedMeals,
+                                onDeleteMeal = { viewModel.deleteMeal(it) }
+                            )
+                        }
+                    }
+                }
             }
-        }
+        } else {
+            // Standard Phone / Folded Cover Display Layout
+            LazyColumn(
+                modifier = Modifier.fillMaxSize().statusBarsPadding(),
+                contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 200.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(28.dp)
+            ) {
+                item {
+                    AvatarSection(
+                        type = uiState.avatarType,
+                        expression = uiState.expression,
+                        visualStyle = uiState.visualStyle,
+                        themeMode = uiState.themeMode,
+                        userName = uiState.userName,
+                        externalTouchPositionInWindow = externalTouchPositionInWindow,
+                        onAvatarTap = { viewModel.onAvatarTap() },
+                        onAvatarDoubleTap = { viewModel.onAvatarDoubleTap() }
+                    )
+                }
 
-        item {
-            StatsGrid(uiState)
-        }
+                item {
+                    LevelHeader(uiState)
+                }
 
-        if (uiState.loggedMeals.isNotEmpty()) {
-            item {
-                MealsSection(
-                    meals = uiState.loggedMeals,
-                    onDeleteMeal = { viewModel.deleteMeal(it) }
-                )
+                if (uiState.syncMessage != null) {
+                    item {
+                        SyncStatusCard(uiState.syncMessage)
+                    }
+                }
+
+                item {
+                    StatsGrid(uiState)
+                }
+
+                if (uiState.loggedMeals.isNotEmpty()) {
+                    item {
+                        MealsSection(
+                            meals = uiState.loggedMeals,
+                            onDeleteMeal = { viewModel.deleteMeal(it) }
+                        )
+                    }
+                }
             }
         }
     }
@@ -1087,29 +1154,21 @@ fun TasksScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            PrimaryTabRow(
-                selectedTabIndex = selectedTab,
-                containerColor = Color.Transparent,
-                divider = {}
-            ) {
-                Tab(
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
-                    text = { Text("Missions", fontWeight = FontWeight.Bold) }
-                )
-                Tab(
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
-                    text = { Text("Meal Log", fontWeight = FontWeight.Bold) }
-                )
-            }
+    BoxWithConstraints(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
+        val isWideScreen = maxWidth >= 600.dp
 
-            if (selectedTab == 0) {
+        if (isWideScreen) {
+            // Foldable Unfolded Dual Pane View (Missions on Left, Meal Log on Right)
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(start = 24.dp, end = 24.dp, top = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(28.dp)
+            ) {
+                // Left Column: Daily Missions
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 200.dp),
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(bottom = 140.dp),
                     verticalArrangement = Arrangement.spacedBy(20.dp)
                 ) {
                     item {
@@ -1157,10 +1216,11 @@ fun TasksScreen(
                         )
                     }
                 }
-            } else {
+
+                // Right Column: Meal Log
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 200.dp),
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(bottom = 140.dp),
                     verticalArrangement = Arrangement.spacedBy(20.dp)
                 ) {
                     item {
@@ -1199,6 +1259,124 @@ fun TasksScreen(
                                 meal = meal,
                                 onDelete = { onMealDelete(meal.id) }
                             )
+                        }
+                    }
+                }
+            }
+        } else {
+            // Standard Phone / Folded Cover Display View (Tabbed)
+            Column(modifier = Modifier.fillMaxSize()) {
+                PrimaryTabRow(
+                    selectedTabIndex = selectedTab,
+                    containerColor = Color.Transparent,
+                    divider = {}
+                ) {
+                    Tab(
+                        selected = selectedTab == 0,
+                        onClick = { selectedTab = 0 },
+                        text = { Text("Missions", fontWeight = FontWeight.Bold) }
+                    )
+                    Tab(
+                        selected = selectedTab == 1,
+                        onClick = { selectedTab = 1 },
+                        text = { Text("Meal Log", fontWeight = FontWeight.Bold) }
+                    )
+                }
+
+                if (selectedTab == 0) {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 200.dp),
+                        verticalArrangement = Arrangement.spacedBy(20.dp)
+                    ) {
+                        item {
+                            Column {
+                                Text(
+                                    "Daily Missions",
+                                    style = MaterialTheme.typography.displaySmall,
+                                    fontWeight = FontWeight.Black,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    FilterChip(
+                                        selected = selectedFilter == 0,
+                                        onClick = { selectedFilter = 0 },
+                                        label = { Text("All (${tasks.size})") }
+                                    )
+                                    FilterChip(
+                                        selected = selectedFilter == 1,
+                                        onClick = { selectedFilter = 1 },
+                                        label = { Text("Active (${tasks.count { !it.isCompleted }})") }
+                                    )
+                                    FilterChip(
+                                        selected = selectedFilter == 2,
+                                        onClick = { selectedFilter = 2 },
+                                        label = { Text("Done (${tasks.count { it.isCompleted }})") }
+                                    )
+                                }
+                            }
+                        }
+                        
+                        items(
+                            count = filteredTasks.size,
+                            key = { filteredTasks[it].id }
+                        ) { index ->
+                            val task = filteredTasks[index]
+                            TaskCard(
+                                task = task, 
+                                onHold = { onTaskHold(task.id) }, 
+                                onTap = { onTaskTap(task.id) },
+                                onReset = { onTaskReset(task.id) },
+                                onDelete = { onTaskDelete(task.id) },
+                                newlyAddedTaskId = newlyAddedTaskId,
+                                onClearNewlyAdded = onClearNewlyAdded
+                            )
+                        }
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 200.dp),
+                        verticalArrangement = Arrangement.spacedBy(20.dp)
+                    ) {
+                        item {
+                            Column {
+                                Text(
+                                    "Meal Log",
+                                    style = MaterialTheme.typography.displaySmall,
+                                    fontWeight = FontWeight.Black,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    "Total Calories Today: ${loggedMeals.sumOf { it.calories }} kcal",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        
+                        if (loggedMeals.isEmpty()) {
+                            item {
+                                Text(
+                                    "No meals logged yet. Use the Bushy AI Camera to scan and log your food!",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(top = 32.dp)
+                                )
+                            }
+                        } else {
+                            items(
+                                count = loggedMeals.size,
+                                key = { loggedMeals[it].id }
+                            ) { index ->
+                                val meal = loggedMeals[index]
+                                MealCard(
+                                    meal = meal,
+                                    onDelete = { onMealDelete(meal.id) }
+                                )
+                            }
                         }
                     }
                 }
@@ -1665,7 +1843,7 @@ fun AvatarSection(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(450.dp)
+                .heightIn(max = 380.dp)
                 .pointerInput(Unit) {
                     detectTapGestures(
                         onTap = { 
