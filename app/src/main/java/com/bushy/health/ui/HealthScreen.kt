@@ -205,7 +205,8 @@ fun HealthMainContent(uiState: UserStats, viewModel: HealthViewModel) {
                             HomeScreen(
                                 uiState = uiState,
                                 viewModel = viewModel,
-                                externalTouchPositionInWindow = homeTouchPosition
+                                externalTouchPositionInWindow = homeTouchPosition,
+                                onShareClick = { showShareMenu = true }
                             )
                         }
                     } else if (page == 1) {
@@ -421,19 +422,6 @@ fun HealthMainContent(uiState: UserStats, viewModel: HealthViewModel) {
                                 performSubtleClick()
                                 viewModel.resetAllStats() 
                             }
-                        )
-                    }
-                }
-
-                if (pagerState.currentPage == 0) {
-                    IconButton(
-                        onClick = { showShareMenu = true },
-                        modifier = Modifier.align(Alignment.CenterEnd)
-                    ) {
-                        Icon(
-                            Icons.Rounded.Share, 
-                            contentDescription = "Share",
-                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         )
                     }
                 }
@@ -1015,10 +1003,46 @@ fun LevelHeader(stats: UserStats) {
 }
 
 @Composable
+fun ShareProgressButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        onClick = onClick,
+        color = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        shape = RoundedCornerShape(20.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.25f)),
+        shadowElevation = 2.dp,
+        modifier = modifier
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                Icons.Rounded.Share,
+                contentDescription = "Share Progress",
+                modifier = Modifier.size(20.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.width(10.dp))
+            Text(
+                "Share Progress",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.ExtraBold
+            )
+        }
+    }
+}
+
+@Composable
 fun HomeScreen(
     uiState: UserStats,
     viewModel: HealthViewModel,
-    externalTouchPositionInWindow: Offset? = null
+    externalTouchPositionInWindow: Offset? = null,
+    onShareClick: () -> Unit = {}
 ) {
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val isWideScreen = maxWidth >= 600.dp
@@ -1032,7 +1056,7 @@ fun HomeScreen(
                     .padding(start = 24.dp, end = 24.dp, top = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(28.dp)
             ) {
-                // Left Column: Avatar & Level Header
+                // Left Column: Avatar, Level Header & Prominent Share Button
                 LazyColumn(
                     modifier = Modifier.weight(0.45f),
                     contentPadding = PaddingValues(bottom = 140.dp),
@@ -1053,6 +1077,9 @@ fun HomeScreen(
                     }
                     item {
                         LevelHeader(uiState)
+                    }
+                    item {
+                        ShareProgressButton(onClick = onShareClick)
                     }
                 }
 
@@ -1106,6 +1133,10 @@ fun HomeScreen(
 
                 item {
                     LevelHeader(uiState)
+                }
+
+                item {
+                    ShareProgressButton(onClick = onShareClick)
                 }
 
                 if (uiState.syncMessage != null) {
