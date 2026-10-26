@@ -2,7 +2,6 @@ import SwiftUI
 
 public struct NavigationPill: View {
     @Binding var selectedTab: Int
-    var isDuo: Bool = false
     var visualStyle: VisualStyle = .monochrome
     var onAddQuest: () -> Void
     var onScanMeal: () -> Void
@@ -10,22 +9,6 @@ public struct NavigationPill: View {
     
     @State private var isMenuExpanded = false
     @State private var isTappedPulse = false
-    
-    public init(
-        selectedTab: Binding<Int>,
-        isDuo: Bool = false,
-        visualStyle: VisualStyle = .monochrome,
-        onAddQuest: @escaping () -> Void,
-        onScanMeal: @escaping () -> Void,
-        onShareStory: @escaping () -> Void
-    ) {
-        self._selectedTab = selectedTab
-        self.isDuo = isDuo
-        self.visualStyle = visualStyle
-        self.onAddQuest = onAddQuest
-        self.onScanMeal = onScanMeal
-        self.onShareStory = onShareStory
-    }
     
     public var body: some View {
         ZStack(alignment: .bottom) {
@@ -43,11 +26,10 @@ public struct NavigationPill: View {
                     .transition(.opacity)
             }
             
-            // Anchored Menu and Navigation Bar
+            // Bottom Bar & Anchored Trailing Menu
             VStack(alignment: .trailing, spacing: 14) {
                 if isMenuExpanded {
                     fabMenuCard
-                        .padding(.trailing, isDuo ? 24 : 20)
                         .transition(
                             .asymmetric(
                                 insertion: .scale(scale: 0.65, anchor: .bottomTrailing)
@@ -60,12 +42,10 @@ public struct NavigationPill: View {
                         )
                 }
                 
-                if isDuo {
-                    floatingDuoBar
-                } else {
-                    dockedBottomBar
-                }
+                bottomDockBar
             }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 16)
         }
     }
     
@@ -164,98 +144,10 @@ public struct NavigationPill: View {
         .buttonStyle(MenuRowButtonStyle())
     }
     
-    // MARK: - Docked Full-Width Bottom Bar (Portrait Mode)
+    // MARK: - Floating Liquid Bottom Bar
     
-    private var dockedBottomBar: some View {
-        VStack(spacing: 0) {
-            Divider()
-                .opacity(0.3)
-            
-            HStack(spacing: 8) {
-                dockTabButton(index: 0, title: "Home", icon: "house.fill")
-                dockTabButton(index: 1, title: "Quests", icon: "checklist")
-                dockTabButton(index: 2, title: "Bushy AI", icon: "sparkles")
-                
-                Spacer()
-                
-                dockActionButton
-            }
-            .padding(.horizontal, 20)
-            .padding(.top, 10)
-            .padding(.bottom, 8)
-        }
-        .background(
-            Rectangle()
-                .fill(.ultraThinMaterial)
-                .ignoresSafeArea(edges: .bottom)
-        )
-    }
-    
-    private func dockTabButton(index: Int, title: String, icon: String) -> some View {
-        let isSelected = selectedTab == index
-        return Button {
-            HapticManager.impact(style: .light)
-            withAnimation(.spring(response: 0.32, dampingFraction: 0.78)) {
-                selectedTab = index
-            }
-        } label: {
-            HStack(spacing: 6) {
-                Image(systemName: icon)
-                    .font(.system(size: 15, weight: .bold))
-                if isSelected {
-                    Text(title)
-                        .font(.system(size: 13, weight: .bold))
-                }
-            }
-            .foregroundColor(isSelected ? Color.bushyAppBackground : .primary)
-            .padding(.horizontal, isSelected ? 16 : 12)
-            .padding(.vertical, 9)
-            .background(
-                Capsule()
-                    .fill(isSelected ? Color.primary : Color.secondary.opacity(0.08))
-            )
-            .overlay(
-                Capsule()
-                    .stroke(isSelected ? Color.clear : Color.primary.opacity(0.08), lineWidth: 1)
-            )
-        }
-    }
-    
-    private var dockActionButton: some View {
-        Button {
-            HapticManager.impact(style: .medium)
-            withAnimation(.spring(response: 0.35, dampingFraction: 0.78)) {
-                isMenuExpanded.toggle()
-            }
-        } label: {
-            ZStack {
-                Circle()
-                    .fill(Color.primary)
-                
-                Circle()
-                    .stroke(
-                        LinearGradient(
-                            colors: [Color.white.opacity(0.6), Color.white.opacity(0.15)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1.5
-                    )
-                
-                Image(systemName: "plus")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(Color.bushyAppBackground)
-                    .rotationEffect(.degrees(isMenuExpanded ? 135 : 0))
-            }
-            .frame(width: 44, height: 44)
-            .shadow(color: Color.black.opacity(isMenuExpanded ? 0.3 : 0.15), radius: 8, x: 0, y: 4)
-        }
-    }
-    
-    // MARK: - Floating Liquid Pill Bar (Duo / Split-Screen Mode)
-    
-    private var floatingDuoBar: some View {
-        HStack(spacing: 12) {
+    private var bottomDockBar: some View {
+        HStack(spacing: 10) {
             // Main Navigation Tabs Capsule
             HStack(spacing: 4) {
                 pillItem(index: 0, title: "Home", icon: "house.fill")
@@ -292,14 +184,12 @@ public struct NavigationPill: View {
                         .foregroundColor(Color.bushyAppBackground)
                         .rotationEffect(.degrees(isMenuExpanded ? 135 : 0))
                 }
-                .frame(width: 50, height: 50)
+                .frame(width: 52, height: 52)
                 .shadow(color: Color.black.opacity(isMenuExpanded ? 0.3 : 0.15), radius: 10, x: 0, y: 5)
             }
         }
         .scaleEffect(isTappedPulse ? 1.05 : 1.0)
         .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isTappedPulse)
-        .padding(.horizontal, 24)
-        .padding(.bottom, 16)
     }
     
     private func pillItem(index: Int, title: String, icon: String) -> some View {

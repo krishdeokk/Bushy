@@ -3,7 +3,6 @@ import SwiftUI
 public struct HealthScreen: View {
     @ObservedObject var viewModel: HealthViewModel
     @StateObject private var aiViewModel = BushyAIViewModel()
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     
     @State private var selectedTab: Int = 0
     @State private var showAddTaskSheet: Bool = false
@@ -16,67 +15,62 @@ public struct HealthScreen: View {
     }
     
     public var body: some View {
-        GeometryReader { geo in
-            let isDuo = DuoSplitLayoutHelper.isDuoLayout(size: geo.size, horizontalSizeClass: horizontalSizeClass)
-            
-            ZStack(alignment: .bottom) {
-                // Main Tab View
-                TabView(selection: $selectedTab) {
-                    HomeScreen(
-                        viewModel: viewModel,
-                        onOpenQuests: {
-                            withAnimation { selectedTab = 1 }
-                        },
-                        onShare: {
-                            showShareSheet = true
-                        },
-                        onSwitchHero: {
-                            showSwitchHeroSheet = true
-                        }
-                    )
-                    .tag(0)
-                    
-                    TasksScreen(
-                        viewModel: viewModel,
-                        onAddQuest: {
-                            showAddTaskSheet = true
-                        },
-                        onScanMeal: {
-                            showScanMealSheet = true
-                        }
-                    )
-                    .tag(1)
-                    
-                    BushyAIScreen(
-                        aiViewModel: aiViewModel,
-                        healthViewModel: viewModel,
-                        onScanMeal: {
-                            showScanMealSheet = true
-                        }
-                    )
-                    .tag(2)
-                }
-                #if os(iOS)
-                .tabViewStyle(.page(indexDisplayMode: .never))
-                #endif
-                .ignoresSafeArea(edges: .bottom)
+        ZStack(alignment: .bottom) {
+            // Main Tab View
+            TabView(selection: $selectedTab) {
+                HomeScreen(
+                    viewModel: viewModel,
+                    onOpenQuests: {
+                        withAnimation { selectedTab = 1 }
+                    },
+                    onShare: {
+                        showShareSheet = true
+                    },
+                    onSwitchHero: {
+                        showSwitchHeroSheet = true
+                    }
+                )
+                .tag(0)
                 
-                // Docked Bottom Navigation Bar in Portrait, Floating Pill in Duo Mode
-                NavigationPill(
-                    selectedTab: $selectedTab,
-                    isDuo: isDuo,
-                    visualStyle: viewModel.uiState.visualStyle,
+                TasksScreen(
+                    viewModel: viewModel,
                     onAddQuest: {
                         showAddTaskSheet = true
                     },
                     onScanMeal: {
                         showScanMealSheet = true
-                    },
-                    onShareStory: {
-                        showShareSheet = true
                     }
                 )
+                .tag(1)
+                
+                BushyAIScreen(
+                    aiViewModel: aiViewModel,
+                    healthViewModel: viewModel,
+                    onScanMeal: {
+                        showScanMealSheet = true
+                    }
+                )
+                .tag(2)
             }
+            #if os(iOS)
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            #endif
+            .ignoresSafeArea(edges: .bottom)
+            
+            // Dynamic Floating Navigation Pill & Anchored Actions Menu
+            NavigationPill(
+                selectedTab: $selectedTab,
+                visualStyle: viewModel.uiState.visualStyle,
+                onAddQuest: {
+                    showAddTaskSheet = true
+                },
+                onScanMeal: {
+                    showScanMealSheet = true
+                },
+                onShareStory: {
+                    showShareSheet = true
+                }
+            )
         }
         .sheet(isPresented: $showAddTaskSheet) {
             AddTaskSheet(viewModel: viewModel)
