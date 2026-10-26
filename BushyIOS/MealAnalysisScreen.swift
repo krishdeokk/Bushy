@@ -4,12 +4,13 @@ public struct MealAnalysisScreen: View {
     @ObservedObject var healthViewModel: HealthViewModel
     @ObservedObject var aiViewModel: BushyAIViewModel
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     
     @State private var inputText: String = ""
+    @State private var currentItem: EditableFoodItem? = nil
     @State private var selectedUnit: PortionUnit = .katori
     @State private var quantity: Double = 1.0
-    @State private var selectedPrepStyle: PrepStyle = .standard
-    @State private var currentItem: EditableFoodItem? = nil
+    @State private var selectedPrepStyle: PrepStyle = .homemade
     
     public init(healthViewModel: HealthViewModel, aiViewModel: BushyAIViewModel) {
         self.healthViewModel = healthViewModel
@@ -18,51 +19,17 @@ public struct MealAnalysisScreen: View {
     
     public var body: some View {
         NavigationStack {
-            ZStack {
-                LiquidFluidBackground(isMonochrome: true)
+            GeometryReader { geo in
+                let isDuo = DuoSplitLayoutHelper.isDuoLayout(size: geo.size, horizontalSizeClass: horizontalSizeClass)
                 
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 20) {
-                        // Header / Search Bar
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Search or Type Meal")
-                                .font(.subheadline)
-                                .fontWeight(.bold)
-                                .foregroundColor(.secondary)
-                            
-                            HStack {
-                                Image(systemName: "magnifyingglass")
-                                    .foregroundColor(.secondary)
-                                
-                                TextField("e.g. Dal Makhani, Poha, 2 Rotis, Paneer...", text: $inputText)
-                                    .onSubmit {
-                                        analyzeDish()
-                                    }
-                                
-                                if !inputText.isEmpty {
-                                    Button {
-                                        inputText = ""
-                                    } label: {
-                                        Image(systemName: "xmark.circle.fill")
-                                            .foregroundColor(.secondary)
-                                    }
-                                }
-                            }
-                            .padding(14)
-                            .liquidGlassCard(cornerRadius: 18)
-                        }
-                        
-                        // Quick Suggestions
-                        quickPills
-                        
-                        // Food Analysis Card
-                        if let item = currentItem {
-                            analysisCard(item)
-                        } else {
-                            emptyPrompt
-                        }
+                ZStack {
+                    LiquidFluidBackground(isMonochrome: true)
+                    
+                    if isDuo {
+                        duoSplitBody(geo: geo)
+                    } else {
+                        standardPortraitBody
                     }
-                    .padding(20)
                 }
             }
             .navigationTitle("Scan / Log Meal 🍲")
@@ -79,25 +46,148 @@ public struct MealAnalysisScreen: View {
         }
     }
     
-    private var quickPills: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                ForEach(["Dal Tadka", "Steamed Rice", "Roti", "Paneer Butter Masala", "Masala Dosa", "Poha", "Chicken Biryani"], id: \.self) { dish in
-                    Button {
-                        inputText = dish
+    // MARK: - Standard Single Column Body
+    
+    private var standardPortraitBody: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 20) {
+                searchCard
+                
+                quickPillsHorizontal
+                
+                if let item = currentItem {
+                    analysisCard(item)
+                } else {
+                    emptyPrompt
+                }
+            }
+            .padding(20)
+        }
+    }
+    
+    // MARK: - Duo Split Screen Body
+    
+    private func duoSplitBody(geo: GeometryProxy) -> some View {
+        HStack(alignment: .top, spacing: 20) {
+            // Left Column: Search & Quick Dishes & Guide
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 16) {
+                    searchCard
+                    
+                    Text("Popular Indian Dishes")
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundColor(.secondary)
+                    
+                    quickPillsVertical
+                    
+                    icmrGuideCard
+                }
+                .padding(.vertical, 16)
+            }
+            .frame(maxWidth: min(geo.size.width * 0.42, 360))
+            
+            // Right Column: Analysis Result / Empty Prompt
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 16) {
+                    if let item = currentItem {
+                        analysisCard(item)
+                    } else {
+                        emptyPrompt
+                    }
+                }
+                .padding(.vertical, 16)
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .padding(.horizontal, 24)
+    }
+    
+    // MARK: - Search Card
+    
+    private var searchCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Search or Type Meal")
+                .font(.subheadline)
+                .fontWeight(.bold)
+                .foregroundColor(.secondary)
+            
+            HStack {
+                Image(systemName: "magnifyingglass")
+                    .foregroundColor(.secondary)
+                
+                TextField("e.g. Dal Makhani, Poha, 2 Rotis, Paneer...", text: $inputText)
+                    .onSubmit {
                         analyzeDish()
+                    }
+                
+                if !inputText.isEmpty {
+                    Button {
+                        inputText = ""
                     } label: {
-                        Text(dish)
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.primary)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 8)
-                            .liquidGlassPill()
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(.secondary)
                     }
                 }
             }
+            .padding(14)
+            .liquidGlassCard(cornerRadius: 18)
         }
+    }
+    
+    // MARK: - Quick Pills
+    
+    private let popularDishes = ["Dal Tadka", "Steamed Rice", "Roti", "Paneer Butter Masala", "Masala Dosa", "Poha", "Chicken Biryani"]
+    
+    private var quickPillsHorizontal: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(popularDishes, id: \.self) { dish in
+                    dishChip(dish)
+                }
+            }
+        }
+    }
+    
+    private var quickPillsVertical: some View {
+        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
+            ForEach(popularDishes, id: \.self) { dish in
+                dishChip(dish)
+            }
+        }
+    }
+    
+    private func dishChip(_ dish: String) -> some View {
+        Button {
+            inputText = dish
+            analyzeDish()
+        } label: {
+            Text(dish)
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundColor(.primary)
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .liquidGlassPill()
+        }
+    }
+    
+    private var icmrGuideCard: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                Image(systemName: "info.circle.fill")
+                    .foregroundColor(.primary)
+                Text("ICMR 2024 Guidelines")
+                    .font(.caption)
+                    .fontWeight(.bold)
+            }
+            Text("Calculations consider home-cooking fat variations (tadka, ghee, frying) with standard Indian portion metrics (katori, pieces).")
+                .font(.caption2)
+                .foregroundColor(.secondary)
+        }
+        .padding(14)
+        .liquidGlassCard(cornerRadius: 16)
     }
     
     private var emptyPrompt: some View {

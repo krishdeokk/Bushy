@@ -6,6 +6,7 @@ import UIKit
 public struct StoryShare: View {
     @ObservedObject var viewModel: HealthViewModel
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     
     #if os(iOS)
     @State private var renderedImage: UIImage? = nil
@@ -18,38 +19,18 @@ public struct StoryShare: View {
     
     public var body: some View {
         NavigationStack {
-            VStack(spacing: 20) {
-                // The Story Card (9:16 aspect ratio preview)
-                storyCardContent
-                    .frame(maxWidth: 320)
-                    .aspectRatio(9/16, contentMode: .fit)
-                    .clipShape(RoundedRectangle(cornerRadius: 32))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 32)
-                            .stroke(Color.primary.opacity(0.3), lineWidth: 1.5)
-                    )
-                    .shadow(color: Color.black.opacity(0.35), radius: 16, x: 0, y: 8)
-                    .padding(.top, 10)
+            GeometryReader { geo in
+                let isDuo = DuoSplitLayoutHelper.isDuoLayout(size: geo.size, horizontalSizeClass: horizontalSizeClass)
                 
-                Spacer()
-                
-                // Share Action Button
-                Button {
-                    renderAndShare()
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "square.and.arrow.up.fill")
-                        Text("Share Story Card")
-                            .fontWeight(.bold)
+                ZStack {
+                    Color.bushyAppBackground.ignoresSafeArea()
+                    
+                    if isDuo {
+                        duoSplitBody(geo: geo)
+                    } else {
+                        standardPortraitBody
                     }
-                    .foregroundColor(Color.bushyAppBackground)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 54)
-                    .background(Color.primary)
-                    .clipShape(Capsule())
-                    .padding(.horizontal, 32)
                 }
-                .padding(.bottom, 20)
             }
             .navigationTitle("Share Story")
             #if os(iOS)
@@ -69,6 +50,113 @@ public struct StoryShare: View {
                 }
             }
             #endif
+        }
+    }
+    
+    // MARK: - Standard Single Column Body
+    
+    private var standardPortraitBody: some View {
+        VStack(spacing: 20) {
+            // The Story Card (9:16 aspect ratio preview)
+            storyCardContent
+                .frame(maxWidth: 320)
+                .aspectRatio(9/16, contentMode: .fit)
+                .clipShape(RoundedRectangle(cornerRadius: 32))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 32)
+                        .stroke(Color.primary.opacity(0.3), lineWidth: 1.5)
+                )
+                .shadow(color: Color.black.opacity(0.35), radius: 16, x: 0, y: 8)
+                .padding(.top, 10)
+            
+            Spacer()
+            
+            // Share Action Button
+            shareButton
+                .padding(.horizontal, 32)
+                .padding(.bottom, 20)
+        }
+    }
+    
+    // MARK: - Duo Split Screen Body
+    
+    private func duoSplitBody(geo: GeometryProxy) -> some View {
+        let cardHeight = min(geo.size.height * 0.82, 480)
+        
+        return HStack(spacing: 32) {
+            // Left Column: Story Card Preview
+            storyCardContent
+                .frame(height: cardHeight)
+                .aspectRatio(9/16, contentMode: .fit)
+                .clipShape(RoundedRectangle(cornerRadius: 28))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 28)
+                        .stroke(Color.primary.opacity(0.3), lineWidth: 1.5)
+                )
+                .shadow(color: Color.black.opacity(0.35), radius: 16, x: 0, y: 8)
+            
+            // Right Column: Summary & Share Actions
+            VStack(alignment: .leading, spacing: 18) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Ready to Inspire 🚀")
+                        .font(.title2)
+                        .fontWeight(.black)
+                        .foregroundColor(.primary)
+                    
+                    Text("Export your high-contrast achievement card and share with friends or on social media.")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                
+                VStack(spacing: 10) {
+                    HStack {
+                        Label("Current Streak", systemImage: "flame.fill")
+                        Spacer()
+                        Text("\(viewModel.uiState.streakDays) Days").fontWeight(.bold)
+                    }
+                    Divider()
+                    HStack {
+                        Label("Avatar Level", systemImage: "star.fill")
+                        Spacer()
+                        Text("Level \(viewModel.uiState.level)").fontWeight(.bold)
+                    }
+                    Divider()
+                    HStack {
+                        Label("Steps Logged", systemImage: "figure.walk")
+                        Spacer()
+                        Text("\(viewModel.uiState.steps)").fontWeight(.bold)
+                    }
+                }
+                .font(.caption)
+                .padding(14)
+                .liquidGlassCard(cornerRadius: 18)
+                
+                Spacer()
+                
+                shareButton
+            }
+            .frame(maxWidth: 320)
+        }
+        .padding(.horizontal, 24)
+        .padding(.vertical, 16)
+    }
+    
+    private var shareButton: some View {
+        Button {
+            renderAndShare()
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "square.and.arrow.up.fill")
+                Text("Share Story Card")
+                    .fontWeight(.bold)
+            }
+            .foregroundColor(Color.bushyAppBackground)
+            .frame(maxWidth: .infinity)
+            .frame(height: 52)
+            .background(Color.primary)
+            .clipShape(Capsule())
+            .overlay(Capsule().stroke(Color.white.opacity(0.35), lineWidth: 1.2))
+            .shadow(color: Color.black.opacity(0.18), radius: 10, x: 0, y: 5)
         }
     }
     

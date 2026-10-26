@@ -5,6 +5,8 @@ public struct TasksScreen: View {
     var onAddQuest: () -> Void
     var onScanMeal: () -> Void
     
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    
     public init(
         viewModel: HealthViewModel,
         onAddQuest: @escaping () -> Void,
@@ -16,54 +18,110 @@ public struct TasksScreen: View {
     }
     
     public var body: some View {
-        ZStack {
-            // Ambient Liquid Background (Pure Monochrome)
-            LiquidFluidBackground(isMonochrome: true)
+        GeometryReader { geo in
+            let isDuo = DuoSplitLayoutHelper.isDuoLayout(size: geo.size, horizontalSizeClass: horizontalSizeClass)
             
+            ZStack {
+                // Ambient Liquid Background (Pure Monochrome)
+                LiquidFluidBackground(isMonochrome: true)
+                
+                if isDuo {
+                    duoSplitBody
+                } else {
+                    standardPortraitBody
+                }
+            }
+        }
+    }
+    
+    // MARK: - Standard Single Column Body (Portrait iPhone)
+    
+    private var standardPortraitBody: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 24) {
+                // Header
+                questsHeader
+                
+                // Tasks List
+                tasksList
+                
+                // Macro Nutrition Dashboard
+                macroNutritionSection
+                
+                // Logged Meals History
+                loggedMealsSection
+                
+                Spacer(minLength: 120) // Spacing for bottom floating pill
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 16)
+        }
+    }
+    
+    // MARK: - Duo Split Screen Body (Landscape iPhone, Plus/Max, iPad, Foldables)
+    
+    private var duoSplitBody: some View {
+        HStack(alignment: .top, spacing: 20) {
+            // Left Column: Quests & Active Tasks
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 24) {
-                    // Header
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Fitness Quests 🎯")
-                                .font(.title2)
-                                .fontWeight(.black)
-                            Text("Complete quests to earn XP and level up Bloub")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                        Spacer()
-                        Button(action: onAddQuest) {
-                            Image(systemName: "plus")
-                                .font(.system(size: 16, weight: .bold))
-                                .foregroundColor(Color.bushyAppBackground)
-                                .frame(width: 44, height: 44)
-                                .background(Color.primary)
-                                .clipShape(Circle())
-                                .overlay(
-                                    Circle().stroke(Color.white.opacity(0.35), lineWidth: 1.2)
-                                )
-                                .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
-                        }
-                    }
+                VStack(spacing: 16) {
+                    questsHeader
                     
-                    // Tasks List
-                    VStack(spacing: 14) {
-                        ForEach(viewModel.uiState.tasks) { task in
-                            taskCard(task)
-                        }
-                    }
+                    tasksList
                     
-                    // Macro Nutrition Dashboard
+                    Spacer(minLength: 120)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            
+            // Right Column: Macros & Logged Meals
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 18) {
                     macroNutritionSection
                     
-                    // Logged Meals History
                     loggedMealsSection
                     
-                    Spacer(minLength: 120) // Spacing for bottom floating pill
+                    Spacer(minLength: 120)
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 16)
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .padding(.horizontal, 24)
+        .padding(.top, 16)
+    }
+    
+    // MARK: - Subcomponents
+    
+    private var questsHeader: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Fitness Quests 🎯")
+                    .font(.title2)
+                    .fontWeight(.black)
+                Text("Complete quests to earn XP and level up Bloub")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            Spacer()
+            Button(action: onAddQuest) {
+                Image(systemName: "plus")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(Color.bushyAppBackground)
+                    .frame(width: 44, height: 44)
+                    .background(Color.primary)
+                    .clipShape(Circle())
+                    .overlay(
+                        Circle().stroke(Color.white.opacity(0.35), lineWidth: 1.2)
+                    )
+                    .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
+            }
+        }
+    }
+    
+    private var tasksList: some View {
+        VStack(spacing: 14) {
+            ForEach(viewModel.uiState.tasks) { task in
+                taskCard(task)
             }
         }
     }
@@ -192,7 +250,7 @@ public struct TasksScreen: View {
                 macroCard(label: "Fats", amount: "\(viewModel.uiState.totalFatGrams)g", target: "60g")
             }
         }
-        .padding(.top, 8)
+        .padding(.top, 4)
     }
     
     private func macroCard(label: String, amount: String, target: String) -> some View {

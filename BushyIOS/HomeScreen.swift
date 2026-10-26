@@ -6,6 +6,8 @@ public struct HomeScreen: View {
     var onShare: () -> Void
     var onSwitchHero: () -> Void
     
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    
     public init(
         viewModel: HealthViewModel,
         onOpenQuests: @escaping () -> Void,
@@ -19,32 +21,188 @@ public struct HomeScreen: View {
     }
     
     public var body: some View {
-        ZStack {
-            // Ambient Liquid Fluid Background (Monochrome Grayscale)
-            LiquidFluidBackground(isMonochrome: true)
+        GeometryReader { geo in
+            let isDuo = DuoSplitLayoutHelper.isDuoLayout(size: geo.size, horizontalSizeClass: horizontalSizeClass)
             
+            ZStack {
+                // Ambient Liquid Fluid Background (Monochrome Grayscale)
+                LiquidFluidBackground(isMonochrome: true)
+                
+                if isDuo {
+                    duoSplitBody(geo: geo)
+                } else {
+                    standardPortraitBody
+                }
+            }
+        }
+    }
+    
+    // MARK: - Standard Single Column Body (Portrait iPhone)
+    
+    private var standardPortraitBody: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 22) {
+                // Top Action Bar
+                topBar
+                
+                // Level & XP Bar
+                levelProgressSection
+                
+                // Hero Avatar Section (Clean procedural Bloub)
+                heroAvatarSection(avatarSize: 300)
+                
+                // Stats Grid
+                statsGrid
+                
+                // Quick Quests Snapshot
+                questsSnapshot
+                
+                Spacer(minLength: 120) // Bottom spacing for navigation pill
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 12)
+        }
+    }
+    
+    // MARK: - Duo / Split Screen Layout Body (Landscape iPhone, Plus/Max, iPad, Duo screens)
+    
+    private func duoSplitBody(geo: GeometryProxy) -> some View {
+        let avatarDimension = min(geo.size.height * 0.44, 250)
+        
+        return HStack(alignment: .top, spacing: 20) {
+            // Left Column: Avatar Hero, Level, Streak & Quick Menu
+            VStack(spacing: 16) {
+                duoLeftTopBar
+                
+                heroAvatarSection(avatarSize: avatarDimension)
+                
+                levelProgressSection
+                
+                Spacer(minLength: 80)
+            }
+            .frame(maxWidth: geo.size.width * 0.42)
+            
+            // Right Column: Action Bar, Stats Grid, Active Quests
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 22) {
-                    // Top Action Bar
-                    topBar
+                VStack(spacing: 18) {
+                    duoRightTopBar
                     
-                    // Level & XP Bar
-                    levelProgressSection
-                    
-                    // Hero Avatar Section (Clean procedural Bloub)
-                    heroAvatarSection
-                    
-                    // Stats Grid
                     statsGrid
                     
-                    // Quick Quests Snapshot
                     questsSnapshot
                     
-                    Spacer(minLength: 120) // Bottom spacing for navigation pill
+                    Spacer(minLength: 110)
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 12)
             }
+            .frame(maxWidth: .infinity)
+        }
+        .padding(.horizontal, 24)
+        .padding(.top, 12)
+    }
+    
+    // MARK: - Duo Top Bars
+    
+    private var duoLeftTopBar: some View {
+        HStack {
+            menuButton
+            
+            Spacer()
+            
+            // Streak Flame Badge
+            HStack(spacing: 6) {
+                Image(systemName: "flame.fill")
+                    .foregroundColor(.primary)
+                Text("\(viewModel.uiState.streakDays) Days")
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .liquidGlassPill()
+            
+            // Level Badge
+            Text("LVL \(viewModel.uiState.level)")
+                .font(.subheadline)
+                .fontWeight(.black)
+                .foregroundColor(.primary)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
+                .liquidGlassPill()
+        }
+    }
+    
+    private var duoRightTopBar: some View {
+        HStack {
+            Text("Dashboard Overview")
+                .font(.title3)
+                .fontWeight(.bold)
+                .foregroundColor(.primary)
+            
+            Spacer()
+            
+            Button {
+                viewModel.refreshStats()
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                    Text("Sync")
+                        .fontWeight(.bold)
+                }
+                .font(.caption)
+                .foregroundColor(.primary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .liquidGlassPill()
+            }
+            
+            Button(action: onShare) {
+                Image(systemName: "square.and.arrow.up")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.primary)
+                    .frame(width: 40, height: 40)
+                    .liquidGlassCircle()
+            }
+        }
+    }
+    
+    // MARK: - Menu Button
+    
+    private var menuButton: some View {
+        Menu {
+            Button {
+                viewModel.refreshStats()
+            } label: {
+                Label("Sync Apple Health", systemImage: "arrow.triangle.2.circlepath")
+            }
+            
+            Button {
+                onSwitchHero()
+            } label: {
+                Label("Switch Hero Avatar", systemImage: "person.crop.circle")
+            }
+            
+            Divider()
+            
+            Button {
+                let next: ThemeMode = (viewModel.uiState.themeMode == .light) ? .dark : ((viewModel.uiState.themeMode == .dark) ? .system : .light)
+                viewModel.setThemeMode(next)
+            } label: {
+                Label("Theme: \(viewModel.uiState.themeMode.rawValue.capitalized)", systemImage: "circle.lefthalf.filled")
+            }
+            
+            Divider()
+            
+            Button(role: .destructive) {
+                viewModel.resetAllStats()
+            } label: {
+                Label("Reset Progress", systemImage: "trash")
+            }
+        } label: {
+            Image(systemName: "line.3.horizontal")
+                .font(.system(size: 18, weight: .bold))
+                .foregroundColor(.primary)
+                .frame(width: 44, height: 44)
+                .liquidGlassCircle()
         }
     }
     
@@ -52,42 +210,7 @@ public struct HomeScreen: View {
     
     private var topBar: some View {
         HStack {
-            Menu {
-                Button {
-                    viewModel.refreshStats()
-                } label: {
-                    Label("Sync Apple Health", systemImage: "arrow.triangle.2.circlepath")
-                }
-                
-                Button {
-                    onSwitchHero()
-                } label: {
-                    Label("Switch Hero Avatar", systemImage: "person.crop.circle")
-                }
-                
-                Divider()
-                
-                Button {
-                    let next: ThemeMode = (viewModel.uiState.themeMode == .light) ? .dark : ((viewModel.uiState.themeMode == .dark) ? .system : .light)
-                    viewModel.setThemeMode(next)
-                } label: {
-                    Label("Theme: \(viewModel.uiState.themeMode.rawValue.capitalized)", systemImage: "circle.lefthalf.filled")
-                }
-                
-                Divider()
-                
-                Button(role: .destructive) {
-                    viewModel.resetAllStats()
-                } label: {
-                    Label("Reset Progress", systemImage: "trash")
-                }
-            } label: {
-                Image(systemName: "line.3.horizontal")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(.primary)
-                    .frame(width: 44, height: 44)
-                    .liquidGlassCircle()
-            }
+            menuButton
             
             Spacer()
             
@@ -159,13 +282,13 @@ public struct HomeScreen: View {
     
     // MARK: - Hero Avatar Section
     
-    private var heroAvatarSection: some View {
+    private func heroAvatarSection(avatarSize: CGFloat) -> some View {
         VStack(spacing: 8) {
             ZStack {
                 // Subtle organic background aura
                 Circle()
                     .fill(Color.secondary.opacity(0.06))
-                    .frame(width: 280, height: 280)
+                    .frame(width: avatarSize * 0.93, height: avatarSize * 0.93)
                 
                 BloubAvatar(
                     expression: viewModel.uiState.expression,
@@ -180,12 +303,12 @@ public struct HomeScreen: View {
                         viewModel.onAvatarDoubleTap()
                     }
                 )
-                .frame(width: 300, height: 300)
+                .frame(width: avatarSize, height: avatarSize)
             }
-            .frame(height: 320)
+            .frame(height: avatarSize + 16)
             
             Text(viewModel.uiState.userName.isEmpty ? "Bushy ☁️" : "\(viewModel.uiState.userName)'s Bushy ☁️")
-                .font(.title2)
+                .font(.headline)
                 .fontWeight(.black)
                 .foregroundColor(.primary)
         }

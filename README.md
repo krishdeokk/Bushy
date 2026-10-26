@@ -8,6 +8,7 @@
 
 - **Procedural Bloub Character Engine**: 64-radial Catmull-Rom spline deformation, dynamic 3D gaze tracking, harmonic breathing, and quintic-eased state machines rendered live via SwiftUI `Canvas` and `TimelineView`.
 - **Liquid Glass & High-Contrast Design System**: Multi-layered `.ultraThinMaterial` glass cards, specular highlights, dynamic ambient fluid background orbs, and full support for both Vibrant Material 3 and Ultra-Minimalist Monochrome styles.
+- **Adaptive Duo & Split-Screen Architecture**: Responsive dual-column split layouts for larger screen iPhones (Plus/Max), landscape orientation, iPad, and foldables—presenting avatar visuals, dashboards, and conversational mentorship side-by-side.
 - **Offline Indian Nutrition & NLP Engine**: Multilingual food parsing (supporting Hindi/regional culinary names, dish preparation styles like *tadka*, *shallow fried*, *steamed*, and traditional serving units like *katori*, *plate*, *piece*).
 - **Offline Bushy AI Mentor**: Purely local rule-based and heuristic mentor answering nutrition questions, analyzing calorie budgets, and auto-synthesizing in-app health quests on demand.
 - **Apple HealthKit Sync**: Real-time background query synchronization for daily step counts and active calorie burn.
@@ -143,6 +144,7 @@ Bushy iOS features an ultra-sleek, minimalist aesthetic inspired by Apple's high
 ```
 
 - **Dynamic Contrast Inversion**: Uses `Color.bushyAppBackground` combined with `Color.primary` to ensure that buttons and active states automatically invert correctly between Light and Dark modes.
+- **Duo Split-Screen Adaptation**: Intelligently toggles between single-column mobile flow and two-column split layout across landscape iPhone, Plus/Max sizes, and iPad formats.
 
 ---
 
@@ -198,8 +200,7 @@ BushyIOS/
 - Physical iOS Device (recommended for HealthKit step querying) or iOS Simulator.
 
 ### Setup Instructions
-1. Clone the repository and switch to the `ios` branch:
-   ```bash
+1. Clone the repository and switch to the `ios` branch:\n   ```bash
    git clone https://github.com/krishdeokk/Bushy.git
    cd Bushy
    git checkout ios

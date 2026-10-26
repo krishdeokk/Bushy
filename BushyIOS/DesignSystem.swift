@@ -39,6 +39,24 @@ public struct HapticManager {
     }
 }
 
+// MARK: - Duo / Split Screen Layout Support
+
+public struct DuoSplitLayoutHelper {
+    public static func isDuoLayout(size: CGSize, horizontalSizeClass: UserInterfaceSizeClass?) -> Bool {
+        if horizontalSizeClass == .regular {
+            return true
+        }
+        // iPhone Landscape (width > height and width >= 568), or wide split-screen / iPad (width >= 600)
+        if size.width > 600 {
+            return true
+        }
+        if size.width > size.height && size.width >= 568 {
+            return true
+        }
+        return false
+    }
+}
+
 // MARK: - Liquid Glass Elements
 
 public struct LiquidGlassCardModifier: ViewModifier {
